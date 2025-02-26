@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+/* :root {
+    --primary-color: #060642;
+    --secondary-color: #FFD942;
+    --text-color: whitesmoke;
+    --navbar-bg: rgba(0, 0, 0, 0.7);
+}
+.custom-navbar {
+    background-color: var(--navbar-bg);
+    padding: 15px 0;
+}
+
+.custom-navbar .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--secondary-color);
+}
+
+.custom-navbar .navbar-nav .nav-link {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    margin: 0 15px;
+    transition: color 0.3s ease-in-out;
+}
+
+.custom-navbar .navbar-nav .nav-link:hover {
+    color: var(--secondary-color);
+}
+
+.custom-navbar .dropdown-toggle {
+    border: none;
+}
+
+.custom-navbar .dropdown-menu {
+    background-color: var(--primary-color);
+}
+
+.custom-navbar .dropdown-menu .dropdown-item {
+    color: var(--text-color);
+}
+
+.custom-navbar .dropdown-menu .dropdown-item:hover {
+    background-color: rgba(255, 217, 66, 0.2);
+}
+
+.logo-navbar {
+    height: 40px;
+    width: auto;
+}
+
+.footer {
+    background-color: var(--navbar-bg);
+    color: var(--secondary-color);
+    text-align: center;
+    padding: 20px;
+} */
+
+body {
+    background-color: #060642;
+    color: whitesmoke;
+    font-family: 'Poppins', sans-serif;
+}
+.custom-navbar {
+    background-color: rgba(0, 0, 0, 0.7); /* Fundo semi-transparente */
+    padding: 15px 0;
+}
+
+.custom-navbar .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #FFD942; /* Mantém a cor dourada */
+}
+
+.custom-navbar .navbar-nav .nav-link {
+    color: whitesmoke;
+    font-size: 1.1rem;
+    margin: 0 15px;
+    transition: color 0.3s ease-in-out;
+}
+
+.custom-navbar .navbar-nav .nav-link:hover {
+    color: #FFD942;
+}
+
+.custom-navbar .dropdown-toggle {
+    border: none;
+}
+
+.custom-navbar .dropdown-menu {
+    background-color: #060642;
+}
+
+.custom-navbar .dropdown-menu .dropdown-item {
+    color: whitesmoke;
+}
+
+.custom-navbar .dropdown-menu .dropdown-item:hover {
+    background-color: rgba(255, 217, 66, 0.2);
+}
+
+.logo-navbar {
+    height: 40px;
+    width: auto;
+}
+
+.footer {
+    background-color: rgba(0, 0, 0, 0.7); 
+    color: #FFD942;
+}
+
+.banner {
+    background: url('/static/images/banner.png') no-repeat center center;
+    background-size: contain; 
+    background-position: center;
+    background-color: #060642;
+    height: 40vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.texto {
+    color: #FFD942;
+    font-size: 2rem; 
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 2rem;
+}

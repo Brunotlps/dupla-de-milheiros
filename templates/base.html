@@ -1,0 +1,64 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dupla de Milheiros</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- CSS  -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+    <!-- Google Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg custom-navbar ">
+        <div class="container">
+            <a class="navbar-brand" href="#">Dupla de Milheiros</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+    
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="#">Notícias</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Viagens</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Produtos</a></li>
+                </ul>
+            </div>
+    
+            <div class="dropdown">
+                <button class="btn btn-outline-light dropdown-toggle" type="button" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="material-symbols-outlined">account_circle</span>
+                </button>
+                
+                
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="configMenu">
+                    <li><a class="dropdown-item" href="#">Perfil</a></li>
+                    <li><a class="dropdown-item" href="#">Configurações</a></li>
+                    <li><a class="dropdown-item" href="#">Sair</a></li>
+                </ul>
+            </div>
+            <img src="{% static 'images/logo.png' %}" alt="Logo da empresa" class="logo-navbar">
+        </div>
+    </nav>
+
+    <header class="banner text-white text-center py-5">
+        <div class="container">
+            
+        </div>
+    </header>
+    {% block body %}
+    {% endblock %}
+    <footer class="footer text-center py-3">
+        <p>&copy; 2025 Dupla de Milheiros. Todos os direitos reservados.</p>
+    </footer>
+</body>
+</html>
