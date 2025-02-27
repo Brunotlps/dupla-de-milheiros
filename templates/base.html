@@ -21,14 +21,14 @@
 <body>
     <nav class="navbar navbar-expand-lg custom-navbar ">
         <div class="container">
-            <a class="navbar-brand" href="#">Dupla de Milheiros</a>
+            <a class="navbar-brand {% if request.path == '/' %}active{% endif %}" href="/">Dupla de Milheiros</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
     
             <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
                 <ul class="navbar-nav">
-                    <li class="nav-item"><a class="nav-link" href="#">Notícias</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/noticias/' %}active{% endif %}" href="{% url 'news' %}">Notícias</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">Viagens</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">Produtos</a></li>
                 </ul>
