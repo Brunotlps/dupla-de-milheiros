@@ -137,3 +137,26 @@ body {
     text-align: center;
     margin-bottom: 2rem;
 }
+
+.titulo-home {
+    color: #FFD942;
+    font-size: 3.0rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+
+img.img-fluid.rounded {
+    padding: 5px;
+    max-height: 600px;
+    width: auto;
+    object-fit: cover;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.fs-4 {
+    text-align: justify;
+    
+}
+

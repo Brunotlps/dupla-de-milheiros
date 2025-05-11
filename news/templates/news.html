@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+
+{% block body %}
+<div class="container mt-4">
+    <h2 class="text-center">Últimas notícias</h2>
+    
+    <div class="text-center mb-3">
+        <button id="atualizarNoticias" class="btn btn-primary">Atualizar</button>
+    </div>
+
+    <div id="noticias-container" class="row">
+        {% for noticia in noticias %}
+        <div class="col-sm-6 col-md-4 mb-4">
+            <div class="card">
+                {% if noticia.urlToImage %}
+                <img src="{{ noticia.urlToImage }}" class="card-img-top" alt="{{noticia.title}}">
+                {% else %}
+                    <img src="{% static 'images/default-news.jpg' %}" class="card-img-top" alt="Imagem padrão">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ noticia.title }}</h5>
+                    <p class="card-text">{{ noticia.description|default:"Descrição não disponível." }}</p>
+                    <a href="{{ noticia.url }}" class="btn btn-primary" target="_blank">Ler mais</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+            <p class="text-center">Nenhuma notícia disponível no momento.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
