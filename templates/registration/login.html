@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container mt-5 login-container"> <!-- Adicionada a classe login-container -->
+    <div class="login-form-container"> <!-- Novo container para o formulário -->
+        <h2>Login</h2>
+        <div class="form-login">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-login">Entrar</button> <!-- Alterada a classe do botão -->
+            </form>
+        </div>
+         <p class="mt-3">
+            Não tem uma conta? <a href="">Registe-se aqui</a>
+        </p>
+        <p class="mt-2">
+            <a href="">Esqueceu a sua palavra-passe?</a>
+        </p>
+    </div>
+</div>
+{% endblock body %}

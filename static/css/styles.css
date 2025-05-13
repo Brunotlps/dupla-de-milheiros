@@ -123,7 +123,7 @@ body {
     background-size: contain; 
     background-position: center;
     background-color: #060642;
-    height: 40vh;
+    height: 30vh;
     width: 100%;
     display: flex;
     align-items: center;
@@ -158,5 +158,102 @@ img.img-fluid.rounded {
 .fs-4 {
     text-align: justify;
     
+}
+
+
+/* Estilos para a Página de Login (templates/registration/login.html) */
+
+/* Centralizar o conteúdo da página de login e dar um espaço superior */
+
+.form-login {
+    justify-content: center;
+    width: 100%;
+    display: flex;
+}
+
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.login-form-container {
+    background-color: rgba(0, 0, 0, 0.3); /* Um fundo levemente transparente para o card do formulário */
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 650px; 
+    height: 70vh;
+}
+
+.login-form-container h2 {
+    color: #FFD942; /* Cor de destaque para o título "Login" */
+    font-size: 3.5rem; /* Tamanho um pouco menor que o h1 da home */
+    font-weight: bold;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+/* Estilo para os rótulos dos campos do formulário, se necessário */
+.login-form-container label {
+    color: #FFD942; /* Garante que os rótulos sejam brancos */
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+/* Estilo para os campos de input do formulário */
+.login-form-container .form-control {
+    background-color: rgba(255, 255, 255, 0.1); /* Fundo levemente transparente para os inputs */
+    color: whitesmoke; /* Cor do texto dentro do input */
+    border: 1px solid #FFD942; /* Borda com a cor de destaque */
+}
+
+.login-form-container .form-control:focus {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: whitesmoke;
+    border-color: #FFD942;
+    box-shadow: 0 0 0 0.25rem rgba(255, 217, 66, 0.3); /* Sombra ao focar, com a cor de destaque */
+}
+
+/* Placeholder text color */
+.login-form-container .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Botão de Login Personalizado */
+.btn-login {
+    background-color: #FFD942; /* Cor de destaque */
+    border-color: #FFD942;
+    color: #060642; /* Cor do texto do botão (azul escuro para contraste) */
+    font-weight: bold;
+    padding: 10px 20px;
+    width: 50%; /* Para ocupar toda a largura do container do formulário */
+    margin-top: 15px;
+}
+
+.btn-login:hover {
+    background-color: #e6c338; /* Um tom um pouco mais escuro para o hover */
+    border-color: #e6c338;
+    color: #060642;
+}
+
+/* Links dentro do container do formulário de login */
+.login-form-container a {
+    color: #FFD942; /* Cor de destaque para os links */
+    text-decoration: none; /* Remove o sublinhado padrão */
+}
+
+.login-form-container a:hover {
+    color: whitesmoke; /* Cor ao passar o mouse */
+    text-decoration: underline;
+}
+
+.login-form-container .mt-3, .login-form-container .mt-2 {
+    text-align: center; /* Centraliza os parágrafos com os links */
 }
 
