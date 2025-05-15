@@ -39,17 +39,25 @@
             </div>
     
             <div class="dropdown">
-                <button class="btn btn-outline-light dropdown-toggle" type="button" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="material-symbols-outlined">account_circle</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="configMenu">
-                    <li><a class="dropdown-item" href="#">Perfil</a></li>
-                    <li><a class="dropdown-item" href="#">Configurações</a></li>
-                    <li><a class="dropdown-item" href="#">Sair</a></li>
-                </ul>
+                {% if user.is_authenticated %}
+                    {# Utilizador ESTÁ logado #}
+                    <button class="btn btn-outline-light dropdown-toggle" type="button" id="configMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="material-symbols-outlined">account_circle</span>
+                        Olá, {{ user.username }}! <!-- Opcional: Saudar o utilizador -->
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="configMenu">
+                        <li><a class="dropdown-item" href="#">Meu Perfil</a></li> <!-- Placeholder para a página de perfil -->
+                        <li><a class="dropdown-item" href="#">Configurações</a></li> <!-- Placeholder para configurações -->
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">Sair</a></li>
+                    </ul>
+                {% else %}
+                    {# Utilizador NÃO está logado #}
+                    <a class="btn btn-outline-light d-flex align-items-center" href="{% url 'login' %}" role="button">
+                        <span class="material-symbols-outlined me-2">login</span> <!-- Ícone de login -->
+                        Entrar
+                    </a>
+                {% endif %}
             </div>
-            <img src="{% static 'images/logo.png' %}" alt="Logo da empresa" class="logo-navbar">
-        </div>
     </nav>
 
     <header class="banner text-white text-center py-5">

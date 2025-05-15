@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+<div class="container mt-5 login-container"> 
+    <div class="login-form-container"> 
+        <h2>Crie a Sua Conta</h2>
+        
+        {# Exibir mensagens do Django (ex: erros gerais do formulário, sucesso) #}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} mt-3" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            {# Renderizar cada campo do formulário individualmente para maior controlo #}
+            {# Se o seu CustomUserCreationForm já adiciona a classe 'form-control' aos widgets, ótimo! #}
+            {# Caso contrário, pode precisar de envolver cada {{ field }} numa div e adicionar classes #}
+
+            <div class="mb-3 form-field-custom">
+                {{ form.username.label_tag }}
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.username.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3 form-field-custom">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.email.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3 form-field-custom">
+                {{ form.password1.label_tag }}
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.password1.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3 form-field-custom">
+                {{ form.password2.label_tag }}
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.password2.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            
+            <div class="mb-3 form-field-custom">
+                {{ form.first_name.label_tag }}
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+
+            <div class="mb-3 form-field-custom">
+                {{ form.last_name.label_tag }}
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.last_name.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            {# Exibir erros não relacionados a campos específicos (non-field errors) #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger mt-3" role="alert">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-login">Criar Conta</button> 
+        </form>
+
+        <p class="mt-3">
+            Já tem uma conta? <a href="{% url 'login' %}">Faça login aqui</a>
+        </p>
+    </div>
+</div>
+{% endblock body %}
