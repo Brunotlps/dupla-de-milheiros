@@ -48,7 +48,14 @@
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="configMenu">
                         <li><a class="dropdown-item" href="#">Meu Perfil</a></li> <!-- Placeholder para a página de perfil -->
                         <li><a class="dropdown-item" href="#">Configurações</a></li> <!-- Placeholder para configurações -->
-                        <li><a class="dropdown-item" href="{% url 'logout' %}">Sair</a></li>
+                        <li>
+                            <form id="logout-form" method="post" action="{% url 'logout' %}" style="margin: 0;">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item" style="border: none; background: none; width: 100%; text-align: left; padding: var(--bs-dropdown-item-padding-y) var(--bs-dropdown-item-padding-x);">
+                                    Sair
+                                </button>
+                            </form>
+                        </li>
                     </ul>
                 {% else %}
                     {# Utilizador NÃO está logado #}
@@ -59,6 +66,17 @@
                 {% endif %}
             </div>
     </nav>
+
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     <header class="banner text-white text-center py-5">
         <div class="container">
