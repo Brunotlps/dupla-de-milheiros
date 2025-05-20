@@ -15,6 +15,7 @@ urlpatterns = [
         template_name="registration/login.html"
     ), name="login"),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('produtos/', include('products.urls', namespace='products')),
 ]
 
 if settings.DEBUG:
