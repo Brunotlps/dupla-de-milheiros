@@ -2,83 +2,95 @@
 {% load static %}
 
 {% block body %}
-<div class="container mt-5">
-    <div class="row">
-        <!-- Coluna da Imagem e Informações de Compra -->
-        <div class="col-md-5">
-            <div class="card mb-4">
-                {% if course.image %}
-                    <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
-                {% else %}
-                    <img src="{% static 'images/course-placeholder.jpg' %}" class="card-img-top" alt="Imagem do curso">
-                {% endif %}
-                <div class="card-body">
-                    <h5 class="card-title">Preço</h5>
-                    <p class="card-text course-price">R$ {{ course.price }}</p>
+<!-- Cabeçalho da página -->
+<div class="page-header">
+    <div class="container">
+        <h1>{{ course.title }}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'products:course_list' %}">Cursos</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ course.title }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container">
+    <div class="content-container fade-in">
+        <div class="row">
+            <!-- Coluna da Imagem e Informações de Compra -->
+            <div class="col-md-5">
+                <div class="course-image-large-container mb-4">
+                    {% if course.image %}
+                        <img src="{{ course.image.url }}" class="course-image-large" alt="{{ course.title }}">
+                    {% else %}
+                        <img src="{% static 'images/course-placeholder.jpg' %}" class="course-image-large" alt="Imagem do curso">
+                    {% endif %}
+                </div>
+                
+                <div class="course-purchase-card">
+                    <div class="course-price-large">R$ {{ course.price }}</div>
                     
                     {% if user_purchased %}
-                        <a href="#" class="btn btn-success btn-lg w-100 mb-2">Acessar Curso</a>
-                        <p class="text-success"><i class="fas fa-check-circle"></i> Você já adquiriu este curso</p>
+                        <a href="#" class="btn btn-success btn-lg btn-block mb-3">Acessar Curso</a>
+                        <div class="purchase-status">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Você já adquiriu este curso</span>
+                        </div>
                     {% else %}
-                        <a href="#" class="btn btn-primary btn-lg w-100">Comprar Agora</a>
+                        <a href="#" class="btn btn-primary btn-lg btn-block">Comprar Agora</a>
                     {% endif %}
                 </div>
             </div>
-        </div>
-        
-        <!-- Coluna da Descrição e Conteúdo -->
-        <div class="col-md-7">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'products:course_list' %}">Cursos</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ course.title }}</li>
-                </ol>
-            </nav>
             
-            <h1 class="mb-4">{{ course.title }}</h1>
-            
-            <div class="mb-4">
-                <h4>Descrição do Curso</h4>
-                <p>{{ course.description }}</p>
-            </div>
-            
-            <div class="mb-4">
-                <h4>Conteúdo do Curso</h4>
-                <div class="accordion" id="courseModules">
-                    {% for module in modules %}
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="heading{{ module.id }}">
-                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ module.id }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ module.id }}">
-                                {{ module.title }}
-                            </button>
-                        </h2>
-                        <div id="collapse{{ module.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ module.id }}" data-bs-parent="#courseModules">
-                            <div class="accordion-body">
-                                {% if module.description %}
-                                    <p>{{ module.description }}</p>
-                                {% endif %}
-                                
-                                <ul class="list-group">
-                                    {% for lesson in module.lessons.all %}
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span>
-                                            <i class="fas fa-play-circle me-2"></i>
-                                            {{ lesson.title }}
-                                        </span>
-                                        {% if lesson.duration %}
-                                            <span class="badge bg-primary rounded-pill">{{ lesson.duration }} min</span>
-                                        {% endif %}
-                                    </li>
-                                    {% empty %}
-                                    <li class="list-group-item">Nenhuma aula disponível neste módulo.</li>
-                                    {% endfor %}
-                                </ul>
+            <!-- Coluna da Descrição e Conteúdo -->
+            <div class="col-md-7">
+                <div class="course-description-section">
+                    <h3 class="section-title">Descrição do Curso</h3>
+                    <div class="course-description-content">
+                        {{ course.description|linebreaks }}
+                    </div>
+                </div>
+                
+                <div class="course-content-section">
+                    <h3 class="section-title">Conteúdo do Curso</h3>
+                    <div class="accordion course-modules" id="courseModules">
+                        {% for module in modules %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ module.id }}">
+                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ module.id }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ module.id }}">
+                                    {{ module.title }}
+                                </button>
+                            </h2>
+                            <div id="collapse{{ module.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ module.id }}" data-bs-parent="#courseModules">
+                                <div class="accordion-body">
+                                    {% if module.description %}
+                                        <p class="module-description">{{ module.description }}</p>
+                                    {% endif %}
+                                    
+                                    <ul class="lesson-list">
+                                        {% for lesson in module.lessons.all %}
+                                        <li class="lesson-item">
+                                            <div class="lesson-info">
+                                                <i class="fas fa-play-circle lesson-icon"></i>
+                                                <span class="lesson-title">{{ lesson.title }}</span>
+                                            </div>
+                                            {% if lesson.duration %}
+                                                <span class="lesson-duration">{{ lesson.duration }} min</span>
+                                            {% endif %}
+                                        </li>
+                                        {% empty %}
+                                        <li class="no-lessons">Nenhuma aula disponível neste módulo.</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
                             </div>
                         </div>
+                        {% empty %}
+                        <div class="no-modules">Nenhum módulo disponível para este curso.</div>
+                        {% endfor %}
                     </div>
-                    {% empty %}
-                    <p>Nenhum módulo disponível para este curso.</p>
-                    {% endfor %}
                 </div>
             </div>
         </div>

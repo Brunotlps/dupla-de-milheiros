@@ -3,7 +3,10 @@ from .models import Course, Module, Lesson
 
 def course_list(request):
     courses = Course.objects.filter(active=True)
-    return render(request, 'products/course_list.html', {'courses':courses})
+    return render(request, 'products/course_list.html', {
+        'courses':courses,
+        'section': 'products'
+    })
 
 def course_detail(request, slug):
     course = get_object_or_404(Course, slug=slug, active=True)

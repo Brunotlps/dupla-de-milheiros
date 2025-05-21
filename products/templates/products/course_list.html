@@ -2,37 +2,52 @@
 {% load static %}
 
 {% block body %}
-<div class="container mt-5">
-    <h1 class="mb-4">Cursos Disponíveis</h1>
-    
-    <div class="row">
-        {% if courses %}
-            {% for course in courses %}
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 course-card">
-                        <div class="course-image-container">
-                            {% if course.image %}
-                                <img src="{{ course.image.url }}" class="course-image" alt="{{ course.title }}">
-                            {% else %}
-                                <img src="{% static 'images/course-placeholder.jpg' %}" class="course-image" alt="Imagem do curso">
-                            {% endif %}
-                        </div>
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title course-title">{{ course.title }}</h5>
-                            <p class="card-text course-description">{{ course.description|truncatewords:20 }}</p>
-                            <div class="mt-auto">
-                                <p class="card-text course-price">R$ {{ course.price }}</p>
-                                <a href="{% url 'products:course_detail' course.slug %}" class="btn btn-course-details">Ver Detalhes</a>
+<!-- Cabeçalho da página -->
+<div class="page-header">
+    <div class="container">
+        <h1>Produtos Disponíveis</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Cursos</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container">
+    <div class="content-container fade-in">
+        <!-- Grid de cursos -->
+        <div class="courses-grid row">
+            {% if courses %}
+                {% for course in courses %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 course-card">
+                            <div class="course-image-container">
+                                {% if course.image %}
+                                    <img src="{{ course.image.url }}" class="course-image" alt="{{ course.title }}">
+                                {% else %}
+                                    <img src="{% static 'images/course-placeholder.jpg' %}" class="course-image" alt="Imagem do curso">
+                                {% endif %}
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title course-title">{{ course.title }}</h5>
+                                <p class="card-text course-description">{{ course.description|truncatewords:20 }}</p>
+                                <div class="mt-auto">
+                                    <p class="card-text course-price">R$ {{ course.price }}</p>
+                                    <a href="{% url 'products:course_detail' course.slug %}" class="btn btn-course-details">Ver Detalhes</a>
+                                </div>
                             </div>
                         </div>
                     </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <p>Nenhum curso disponível no momento.</p>
                 </div>
-            {% endfor %}
-        {% else %}
-            <div class="col-12">
-                <p>Nenhum curso disponível no momento.</p>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
+ 
