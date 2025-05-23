@@ -123,7 +123,7 @@ class Purchases(models.Model):
     course = models.ForeignKey(Course, related_name='purchases', on_delete=models.CASCADE)
     purchase_date = models.DateTimeField(auto_now_add=True)
     value = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
     transaction_code = models.CharField(max_length=100, blank=True, null=True)
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, blank=True, null=True)
     installments = models.PositiveIntegerField(default=1) # numero de parcelas
