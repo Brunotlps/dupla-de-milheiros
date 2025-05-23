@@ -451,8 +451,7 @@ img.img-fluid.rounded {
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    height: 300px;
-    
+    height: 400px;
 }
 
 .course-image-large {
@@ -464,7 +463,7 @@ img.img-fluid.rounded {
 
 /* Card de compra */
 .course-purchase-card {
-    background-color: #fff1bb;
+    background-color: transparent;
     border-radius: 10px;
     padding: 2rem;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
@@ -472,7 +471,7 @@ img.img-fluid.rounded {
 }
 
 .course-price-large {
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: #28a745;
     margin-bottom: 1.5rem;
@@ -502,8 +501,9 @@ img.img-fluid.rounded {
     margin-bottom: 2.5rem;
 }
 
-.course-description-content {
-    color: #495057;
+
+.course-description-content, .section-title {
+    color: whitesmoke;
     line-height: 1.7;
 }
 
