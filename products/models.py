@@ -1,4 +1,4 @@
-from datetime import timezone
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -144,11 +144,12 @@ class Purchases(models.Model):
     def is_approved(self):
         return self.status == 'approved'
     
+    # Define a URL canônica para um objeto 'Purchase' específico 
     def get_absolute_url(self):
         return reverse("products:purchase_detail", args=[self.id])
     
+    # Mapeia o status da compra para uma classe CSS do Bootstrap
     def get_status_display_class(self):
-
         status_classes = {
             'pending': 'warning',
             'approved': 'success',
@@ -184,10 +185,13 @@ class CheckoutSession(models.Model):
     def is_expired(self):
         return timezone.now > self.expires_at
     
+    # Geração de id único para cada sessão de checkout
     def generate_session_id(self):
         import uuid
         return str(uuid.uuid4())
     
+    # Sobrescreve o método save() e adiciona lógica personalizada antes de salvar o obj no database
+    # Garante que toda nova sessão de checkout tenha ID único e implementa tempo para a sessão
     def save(self, *args, **kwargs):
         if not self.pk:
             self.session_id = self.generate_session_id()
@@ -226,6 +230,8 @@ class PaymentSettings(models.Model):
         #Retorna o token adequado com base no ambiente
         return self.sandbox_access_token if self.is_sandbox else self.production_access_token
     
+    # Fornece acesso às configurações ativas do gateway de pagamento ou cria uma padrão
+    # Permite alternar facilmente entre ambientes de teste e produção
     @classmethod 
     def get_active_settings(cls):
         # Retorna as configurações ativas ou cria uma configuração padrão
@@ -237,3 +243,6 @@ class PaymentSettings(models.Model):
                 is_sandbox = True
             )
         return settings
+    
+
+    # CONTINUAR COM CRIAÇÃO DOS FORMS

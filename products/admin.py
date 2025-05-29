@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Course, Module, Lesson, ComplementaryMaterial, Comments, Purchases
+from .models import Course, Module, Lesson, ComplementaryMaterial, Comments, Purchases, CheckoutSession, PaymentSettings
 
 # Inlines
 class ModuleInline(admin.TabularInline):
@@ -56,7 +56,47 @@ class CommentsAdmin(admin.ModelAdmin):
 
 @admin.register(Purchases)
 class PurchasesAdmin(admin.ModelAdmin):
-    list_display = ['user', 'course', 'purchase_date', 'status']
-    list_filter = ['status', 'purchase_date', 'course']
+    list_display = ['user', 'course', 'value', 'status', 'payment_method', 'purchase_date']
+    list_filter = ['status', 'payment_method', 'purchase_date']
     search_fields = ['user__username', 'course__title', 'transaction_code']
-    readonly_fields = ['purchase_date']
+    readonly_fields = ['purchase_date', 'transaction_code', 'gateway_response']
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('user', 'course', 'value', 'status', 'purchase_date')
+        }),
+        ('Detalhes do Pagamento', {
+            'fields': ('payment_method', 'installments', 'transaction_code', 'payment_url', 'payment_expiration')
+        }),
+        ('Informações do Pagador', {
+            'fields': ('payer_email', 'payer_document')
+        }),
+        ('Resposta do Gateway', {
+            'fields': ('gateway_response',),
+            'classes': ('collapse',)
+        })
+    )
+
+@admin.register(CheckoutSession)
+class CheckoutSessionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'course', 'creation_date', 'expires_at', 'is_completed']
+    list_filter = ['is_completed', 'creation_date']
+    search_fields = ['user__username', 'course__title', 'session_id']
+    readonly_fields = ['session_id', 'creation_date', 'expires_at']
+
+@admin.register(PaymentSettings)
+class PaymentSettingsAdmin(admin.ModelAdmin):
+    list_display = ['name', 'is_active', 'is_sandbox', 'updated_at']
+    list_filter = ['is_active', 'is_sandbox']
+    fieldsets = (
+        ('Configurações Gerais', {
+            'fields': ('name', 'is_active', 'is_sandbox')
+        }),
+        ('Credenciais de Produção', {
+            'fields': ('production_public_key', 'production_access_token'),
+            'classes': ('collapse',)
+        }),
+        ('Credenciais de Sandbox', {
+            'fields': ('sandbox_public_key', 'sandbox_access_token'),
+            'classes': ('collapse',)
+        })
+    )
