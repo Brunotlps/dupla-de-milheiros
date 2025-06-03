@@ -423,7 +423,7 @@ img.img-fluid.rounded {
 }
 
 .breadcrumb-item.active {
-    color: rgba(245, 245, 245, 0.871);
+    color: #ffc107;
     font-size: 1.0rem;
 }
 

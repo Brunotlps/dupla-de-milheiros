@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pagamento - {{ course.title }}{% endblock %}
+
+{% block body %}
+<div class="page-header">
+    <div class="container">
+        <h1>Checkout - Pagamento</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'products:course_list' %}">Cursos</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'products:course_detail' course.slug %}">{{ course.title }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Pagamento</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Detalhes do Pagamento</h2>
+            <p>Curso: <strong>{{ course.title }}</strong></p>
+            <p>Valor: <strong>R$ {{ payment_amount }}</strong></p>
+            
+            <!-- Container onde o Payment Brick será renderizado -->
+            <div id="paymentBrick_container"></div>
+
+            <!-- Formulário que será submetido (pode ser ajustado) -->
+            <form id="paymentForm" action="{% url 'products:checkout_payment' %}" method="post">
+                {% csrf_token %}
+                <!-- Campos ocultos para enviar dados adicionais se necessário -->
+                <input type="hidden" name="checkout_session_id" value="{{ checkout_session.session_id }}">
+                <!-- O token de pagamento gerado pelo Brick será adicionado aqui via JS -->
+                
+                <!-- Botão de Pagar (o texto pode ser customizado no Brick) -->
+                <!-- O Brick geralmente inclui seu próprio botão, mas podemos ter um fallback -->
+                <!-- <button type="submit" class="btn btn-primary mt-3">Pagar Agora</button> -->
+            </form>
+
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Resumo do Pedido</h5>
+                    <p>Curso: {{ course.title }}</p>
+                    <p>Preço: R$ {{ payment_amount }}</p>
+                    <hr>
+                    <p><strong>Total: R$ {{ payment_amount }}</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- 1. Incluir o SDK Javascript do Mercado Pago -->
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+
+<script>
+    // 2. Obter a Public Key passada pela view Django
+    const publicKey = "{{ mercadopago_public_key }}";
+    const paymentAmount = parseFloat("{{ payment_amount|stringformat:'.2f' }}" );
+
+    if (!publicKey) {
+        console.error('Erro: Chave pública do Mercado Pago não definida.');
+        // Você pode exibir uma mensagem para o usuário aqui
+        alert('Erro na configuração de pagamento. Por favor, contacte o suporte.');
+    } else {
+        // 3. Inicializar o SDK do Mercado Pago
+        const mp = new MercadoPago(publicKey);
+
+        // 4. Inicializar o Payment Brick
+        const bricksBuilder = mp.bricks();
+
+        const renderPaymentBrick = async (bricksBuilder) => {
+            const settings = {
+                initialization: {
+                    amount: paymentAmount, // Valor total a ser pago
+                    // payer: { // Opcional: dados pré-preenchidos do pagador
+                    //    email: '{{ request.user.email }}', 
+                    // },
+                },
+                customization: {
+                    visual: {
+                        style: {
+                            theme: 'default', // Pode ser 'dark', 'bootstrap', etc.
+                        }
+                    },
+                    paymentMethods: {
+                        // Você pode customizar os métodos de pagamento aqui
+                        // Ex: remover boleto, priorizar pix, etc.
+                        // Consulte a documentação do Payment Brick para detalhes
+                        maxInstallments: 1 // Exemplo: limitar parcelas
+                    }
+                },
+                callbacks: {
+                    onReady: () => {
+                        /* 
+                           Callback chamado quando o Brick está pronto.
+                           Ex: Habilitar o botão de pagamento
+                        */
+                        console.log('Payment Brick pronto!');
+                    },
+                    onSubmit: async ({ selectedPaymentMethod, formData }) => {
+                        // Callback chamado quando o usuário clica em pagar
+                        // É AQUI que a mágica acontece!
+                        console.log('Dados do formulário:', formData);
+                        console.log('Método selecionado:', selectedPaymentMethod);
+                        
+                        // formData contém os dados necessários para criar o pagamento na API
+                        // NÃO envie dados sensíveis (número do cartão) diretamente!
+                        // O Brick já lida com a tokenização segura.
+                        
+                        // O próximo passo (backend) será enviar 'formData' para a nossa view Django
+                        // para que ela chame a API do Mercado Pago e crie o pagamento.
+                        
+                        // Por enquanto, vamos apenas simular o envio:
+                        alert('Pagamento sendo processado... (Simulação Frontend)');
+                        
+                        // **IMPORTANTE:** No próximo passo, substituiremos o alert acima
+                        // por uma chamada fetch() para enviar os dados para o nosso backend.
+                        // Exemplo (NÃO IMPLEMENTAR AINDA):
+                        // return new Promise((resolve, reject) => {
+                        //    fetch("{% url 'products:checkout_process_payment' %}", { // Uma nova URL/View
+                        //        method: "POST",
+                        //        headers: {
+                        //            "Content-Type": "application/json",
+                        //            "X-CSRFToken": "{{ csrf_token }}"
+                        //        },
+                        //        body: JSON.stringify(formData)
+                        //    })
+                        //    .then(response => response.json())
+                        //    .then(data => {
+                        //        // Redirecionar ou mostrar mensagem com base na resposta do backend
+                        //        window.location.href = data.redirect_url;
+                        //        resolve();
+                        //    })
+                        //    .catch(error => {
+                        //        // Tratar erros de comunicação com o backend
+                        //        console.error('Erro ao processar pagamento:', error);
+                        //        alert('Ocorreu um erro ao processar seu pagamento.');
+                        //        reject();
+                        //    });
+                        // });
+                        
+                        // Por enquanto, retornamos uma Promise resolvida para o Brick não bloquear
+                        return Promise.resolve(); 
+                    },
+                    onError: (error) => {
+                        // Callback chamado em caso de erro no Brick (ex: dados inválidos)
+                        console.error('Erro no Payment Brick:', error);
+                        alert('Ocorreu um erro ao preencher os dados de pagamento. Verifique as informações.');
+                    },
+                },
+            };
+            // Renderiza o Brick no container especificado
+            window.paymentBrickController = await bricksBuilder.create('payment', 'paymentBrick_container', settings);
+        };
+
+        renderPaymentBrick(bricksBuilder);
+    }
+</script>
+{% endblock %}

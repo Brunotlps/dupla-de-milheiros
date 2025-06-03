@@ -2,7 +2,7 @@ from django import forms
 from .models import Purchases
 
 class PaymentMethodForm(forms.Form):
-    payment_method = forms.CharField(
+    payment_method = forms.ChoiceField(
         choices=Purchases.PAYMENT_METHOD_CHOICES,
         widget=forms.RadioSelect,
         label="Método de Pagamento"

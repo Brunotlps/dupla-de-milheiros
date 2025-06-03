@@ -183,7 +183,7 @@ class CheckoutSession(models.Model):
         return f'Checkout: {self.user.username} - {self.course.title}'
     
     def is_expired(self):
-        return timezone.now > self.expires_at
+        return timezone.now() > self.expires_at
     
     # Geração de id único para cada sessão de checkout
     def generate_session_id(self):
@@ -245,4 +245,4 @@ class PaymentSettings(models.Model):
         return settings
     
 
-    # CONTINUAR COM CRIAÇÃO DOS FORMS
+    

@@ -33,14 +33,14 @@
                     <div class="course-price-large">R$ {{ course.price }}</div>
                     
                     {% if user_purchased %}
-                        <a href="#" class="btn btn-success btn-lg btn-block mb-3">Acessar Curso</a>
-                        <div class="purchase-status">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Você já adquiriu este curso</span>
-                        </div>
-                    {% else %}
-                        <a href="#" class="btn btn-primary btn-lg btn-block">Comprar Agora</a>
-                    {% endif %}
+                    <a href="#" class="btn btn-success btn-lg w-100 mb-3">Acessar Curso</a>
+                    <div class="purchase-status">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Você já adquiriu este curso</span>
+                    </div>
+                {% else %}
+                    <a href="{% url 'products:checkout_start' course.slug %}" class="btn btn-primary btn-lg w-100">Comprar Agora</a>
+                {% endif %}
                 </div>
             </div>
             

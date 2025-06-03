@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+<div class="page-header">
+    <div class="container">
+        <h1>Detalhes da Compra</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'products:purchase_list' %}">Minhas Compras</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detalhes</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container">
+    <div class="content-container fade-in">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Informações da Compra</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Curso:</p>
+                                <p class="mb-0 fw-bold">{{ purchase.course.title }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Valor:</p>
+                                <p class="mb-0 fw-bold">R$ {{ purchase.value }}</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Data da Compra:</p>
+                                <p class="mb-0">{{ purchase.purchase_date|date:"d/m/Y H:i" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Método de Pagamento:</p>
+                                <p class="mb-0">{{ purchase.get_payment_method_display }}</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Status:</p>
+                                <p class="mb-0">
+                                    <span class="badge bg-{{ purchase.get_status_display_class }}">
+                                        {{ purchase.get_status_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Código da Transação:</p>
+                                <p class="mb-0">{{ purchase.transaction_code|default:"Pendente" }}</p>
+                            </div>
+                        </div>
+                        {% if purchase.payment_method == 'credit_card' %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted">Parcelas:</p>
+                                <p class="mb-0">{{ purchase.installments }}x</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if purchase.payment_method == 'boleto' and purchase.payment_url %}
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Boleto para Pagamento</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <p>Clique no botão abaixo para visualizar e imprimir seu boleto:</p>
+                        <a href="{{ purchase.payment_url }}" target="_blank" class="btn btn-primary">
+                            <i class="fas fa-file-invoice-dollar me-2"></i> Visualizar Boleto
+                        </a>
+                        {% if purchase.payment_expiration %}
+                        <p class="text-danger mt-3">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            Vencimento: {{ purchase.payment_expiration|date:"d/m/Y" }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if purchase.payment_method == 'pix' and purchase.payment_url %}
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">PIX para Pagamento</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <p>Escaneie o QR Code abaixo para realizar o pagamento via PIX:</p>
+                        <div class="qr-code-container mb-3">
+                            <img src="{{ purchase.payment_url }}" alt="QR Code PIX" class="img-fluid">
+                        </div>
+                        <p class="text-muted small">O acesso ao curso será liberado automaticamente após a confirmação do pagamento.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Ações</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if purchase.status == 'approved' %}
+                        <a href="#" class="btn btn-success btn-lg w-100 mb-3">
+                            <i class="fas fa-play-circle me-2"></i> Acessar Curso
+                        </a>
+                        <p class="text-success small">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Seu acesso ao curso já está liberado!
+                        </p>
+                        {% elif purchase.status == 'pending' %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock me-2"></i>
+                            Aguardando confirmação de pagamento
+                        </div>
+                        {% if purchase.payment_method == 'boleto' and purchase.payment_url %}
+                        <a href="{{ purchase.payment_url }}" target="_blank" class="btn btn-primary btn-lg w-100 mb-3">
+                            <i class="fas fa-file-invoice-dollar me-2"></i> Pagar Boleto
+                        </a>
+                        {% endif %}
+                        {% elif purchase.status == 'rejected' %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times-circle me-2"></i>
+                            Pagamento rejeitado
+                        </div>
+                        <a href="{% url 'products:checkout_start' purchase.course.slug %}" class="btn btn-primary btn-lg w-100 mb-3">
+                            <i class="fas fa-redo me-2"></i> Tentar Novamente
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'products:course_detail' purchase.course.slug %}" class="btn btn-outline-primary w-100 mb-3">
+                            <i class="fas fa-info-circle me-2"></i> Ver Detalhes do Curso
+                        </a>
+                        
+                        <a href="{% url 'products:purchase_list' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-arrow-left me-2"></i> Voltar para Minhas Compras
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Suporte</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Está com problemas na sua compra? Entre em contato com nosso suporte:</p>
+                        <a href="mailto:suporte@duplaminheiros.com" class="btn btn-outline-info w-100">
+                            <i class="fas fa-envelope me-2"></i> Enviar E-mail
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .qr-code-container {
+        max-width: 250px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
