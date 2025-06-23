@@ -62,107 +62,79 @@
 <script src="https://sdk.mercadopago.com/js/v2"></script>
 
 <script>
-    // 2. Obter a Public Key passada pela view Django
+    console.log("Debug: Bloco extra_js iniciado.");
+
     const publicKey = "{{ mercadopago_public_key }}";
-    const paymentAmount = parseFloat("{{ payment_amount|stringformat:'.2f' }}" );
+    const paymentAmountValue = parseFloat("{{ payment_amount.normalize }}");
+
+    console.log("Debug: Public Key:", publicKey);
+    console.log("Debug: Payment Amount:", paymentAmountValue);
 
     if (!publicKey) {
-        console.error('Erro: Chave pública do Mercado Pago não definida.');
-        // Você pode exibir uma mensagem para o usuário aqui
-        alert('Erro na configuração de pagamento. Por favor, contacte o suporte.');
+        console.error("Erro Crítico: Chave pública do Mercado Pago não definida.");
+        alert("Erro na configuração de pagamento. Por favor, contacte o suporte.");
+    } else if (isNaN(paymentAmountValue) || paymentAmountValue <= 0) {
+        console.error("Erro Crítico: Valor de pagamento inválido:", paymentAmountValue);
+        alert("Erro no valor do pagamento. Por favor, contacte o suporte.");
     } else {
-        // 3. Inicializar o SDK do Mercado Pago
+        console.log("Debug: Inicializando MercadoPago SDK...");
         const mp = new MercadoPago(publicKey);
-
-        // 4. Inicializar o Payment Brick
         const bricksBuilder = mp.bricks();
 
         const renderPaymentBrick = async (bricksBuilder) => {
+            console.log("Debug: Dentro de renderPaymentBrick.");
+
+            const formattedAmount = paymentAmountValue.toFixed(2);
+            console.log("Debug: Valor formatado para API:", formattedAmount);
+
             const settings = {
                 initialization: {
-                    amount: paymentAmount, // Valor total a ser pago
-                    // payer: { // Opcional: dados pré-preenchidos do pagador
-                    //    email: '{{ request.user.email }}', 
-                    // },
+                    // Passa a string formatada diretamente
+                    amount: formattedAmount, 
                 },
                 customization: {
-                    visual: {
-                        style: {
-                            theme: 'default', // Pode ser 'dark', 'bootstrap', etc.
-                        }
-                    },
                     paymentMethods: {
-                        // Você pode customizar os métodos de pagamento aqui
-                        // Ex: remover boleto, priorizar pix, etc.
-                        // Consulte a documentação do Payment Brick para detalhes
-                        maxInstallments: 1 // Exemplo: limitar parcelas
-                    }
+                        creditCard: 'all',
+                        ticket: 'all',
+                        bankTransfer: 'all',
+                        // pix: 'all',
+                    },
                 },
                 callbacks: {
                     onReady: () => {
-                        /* 
-                           Callback chamado quando o Brick está pronto.
-                           Ex: Habilitar o botão de pagamento
-                        */
-                        console.log('Payment Brick pronto!');
+                        console.log("Info: Payment Brick pronto! (onReady)");
                     },
                     onSubmit: async ({ selectedPaymentMethod, formData }) => {
-                        // Callback chamado quando o usuário clica em pagar
-                        // É AQUI que a mágica acontece!
-                        console.log('Dados do formulário:', formData);
-                        console.log('Método selecionado:', selectedPaymentMethod);
-                        
-                        // formData contém os dados necessários para criar o pagamento na API
-                        // NÃO envie dados sensíveis (número do cartão) diretamente!
-                        // O Brick já lida com a tokenização segura.
-                        
-                        // O próximo passo (backend) será enviar 'formData' para a nossa view Django
-                        // para que ela chame a API do Mercado Pago e crie o pagamento.
-                        
-                        // Por enquanto, vamos apenas simular o envio:
-                        alert('Pagamento sendo processado... (Simulação Frontend)');
-                        
-                        // **IMPORTANTE:** No próximo passo, substituiremos o alert acima
-                        // por uma chamada fetch() para enviar os dados para o nosso backend.
-                        // Exemplo (NÃO IMPLEMENTAR AINDA):
-                        // return new Promise((resolve, reject) => {
-                        //    fetch("{% url 'products:checkout_process_payment' %}", { // Uma nova URL/View
-                        //        method: "POST",
-                        //        headers: {
-                        //            "Content-Type": "application/json",
-                        //            "X-CSRFToken": "{{ csrf_token }}"
-                        //        },
-                        //        body: JSON.stringify(formData)
-                        //    })
-                        //    .then(response => response.json())
-                        //    .then(data => {
-                        //        // Redirecionar ou mostrar mensagem com base na resposta do backend
-                        //        window.location.href = data.redirect_url;
-                        //        resolve();
-                        //    })
-                        //    .catch(error => {
-                        //        // Tratar erros de comunicação com o backend
-                        //        console.error('Erro ao processar pagamento:', error);
-                        //        alert('Ocorreu um erro ao processar seu pagamento.');
-                        //        reject();
-                        //    });
-                        // });
-                        
-                        // Por enquanto, retornamos uma Promise resolvida para o Brick não bloquear
+                        console.log("Info: Payment Brick onSubmit chamado.", { selectedPaymentMethod, formData });
+                        alert("Processando pagamento... (Simulação Frontend - Próximo passo: enviar para backend)");
                         return Promise.resolve(); 
                     },
                     onError: (error) => {
-                        // Callback chamado em caso de erro no Brick (ex: dados inválidos)
-                        console.error('Erro no Payment Brick:', error);
-                        alert('Ocorreu um erro ao preencher os dados de pagamento. Verifique as informações.');
+                        console.error("Erro no Payment Brick (onError):", error);
+                        let userMessage = "Ocorreu um erro ao processar os dados de pagamento.";
+                        if (error && error.message) {
+                            if (error.message.includes("invalid card number")) {
+                                userMessage = "Número de cartão inválido. Verifique por favor.";
+                            } else if (error.message.includes("security code")) {
+                                userMessage = "Código de segurança inválido.";
+                            }
+                        }
+                        alert(userMessage + " Verifique as informações e tente novamente.");
                     },
                 },
             };
-            // Renderiza o Brick no container especificado
-            window.paymentBrickController = await bricksBuilder.create('payment', 'paymentBrick_container', settings);
+            try {
+                console.log("Debug: Tentando criar o Payment Brick...");
+                window.paymentBrickController = await bricksBuilder.create("payment", "paymentBrick_container", settings);
+                console.log("Sucesso: Payment Brick criado.");
+            } catch (error) {
+                console.error("Erro Crítico ao chamar bricksBuilder.create():", error);
+                alert("Ocorreu um erro grave ao inicializar o módulo de pagamento. Tente recarregar a página ou contacte o suporte.");
+            }
         };
 
         renderPaymentBrick(bricksBuilder);
     }
+    console.log("Debug: Fim do bloco extra_js.");
 </script>
 {% endblock %}

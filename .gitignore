@@ -1,0 +1,40 @@
+# Arquivos de log
+*.log
+
+# Arquivos de cache do Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Diretórios de ambientes virtuais
+venv/
+env/
+
+# Configurações locais
+*.env
+.env
+
+# Arquivos de banco de dados SQLite (se estiver usando)
+db.sqlite3
+
+# Arquivos de migração do Django (opcional, se você quiser gerá-los localmente)
+migrations/
+
+# Arquivos de mídia e uploads (se não forem necessários no repositório)
+media/
+
+# Arquivos de compilação
+*.egg-info/
+*.dist-info/
+build/
+dist/
+
+# Arquivos do VS Code
+.vscode/
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+debug.log

@@ -11,6 +11,12 @@ from django.utils import timezone
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.conf import settings
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
 
 def course_list(request):
     courses = Course.objects.filter(active=True)
@@ -57,128 +63,16 @@ def checkout_start(request, course_slug):
     
     request.session['checkout_session_id'] = checkout_session.session_id
 
-    return redirect('products:checkout_payment_method')
+    logger.info(f"Usuário {request.user.username} iniciou o checkout para o curso {course.slug}")
+    logger.info(f"Checkout Session ID: {request.session.get('checkout_session_id')}")
+    return redirect('products:checkout_payment')
 
 @login_required
-def checkout_payment_method(request):
-    checkout_session_id = request.session.get('checkout_session_id')
-    
-    if not checkout_session_id:
-        messages.error(request, "Sessão de checkout inválida ou expirada")
-        return redirect('products:course_list')
-    
-    try:
-        checkout_session = CheckoutSession.objects.get(session_id=checkout_session_id)
-
-        if checkout_session.is_expired():
-            del request.session['checkout_session_id']
-            messages.error(request, "Sessão de checkout inválida ou expirada")
-            return redirect('products:course_list')
-        
-        course = checkout_session.course
-        
-    except CheckoutSession.DoesNotExist:
-        messages.error(request, "Sessão de checkout inválida ou expirada")
-        return redirect('products:course_list')
-
-
-    if request.method == 'POST':
-        form = PaymentMethodForm(request.POST)
-        if form.is_valid():
-            payment_method = form.cleaned_data['payment_method']
-            checkout_session.payment_method = payment_method
-            checkout_session.save()
-            return redirect('products:checkout_payment')
-    else:
-        form = PaymentMethodForm()
-    
-    return render(request, 'products/checkout/payment_method.html', {
-        'form': form,
-        'checkout_session': checkout_session,
-        'course': course
-    })
-
-@login_required
-def checkout_payment(request):
+def checkout_payment(request,):
     checkout_session_id = request.session.get("checkout_session_id")
     if not checkout_session_id:
         messages.error(request, "Sessão de checkout inválida ou expirada.")
         return redirect('products:course_list')
-    
-    # # Verificar se o método de pagamento foi selecionado
-    # if not checkout_session_id.payment_method:
-    #     return redirect('products:checkout_payment_method')
-    
-    # course = checkout_session.course
-    # payment_method = checkout_session.payment_method
-    
-    # # Obter as configurações de pagamento ativas
-    # payment_settings = PaymentSettings.get_active_settings()
-    
-    # if request.method == 'POST':
-    #     # Formulário para informações do cliente
-    #     customer_form = CustomerInfoForm(request.POST)
-        
-    #     # Formulário específico para o método de pagamento
-    #     if payment_method == 'credit_card':
-    #         payment_form = CreditCardForm(request.POST)
-    #     else:
-    #         # Para boleto e PIX, não precisamos de formulário adicional
-    #         payment_form = forms.Form(request.POST)
-        
-    #     if customer_form.is_valid() and payment_form.is_valid():
-    #         # Processar o pagamento (implementaremos na próxima etapa)
-    #         # Por enquanto, apenas simularemos o processo
-            
-    #         # Criar o registro de compra
-    #         purchase = Purchases.objects.create(
-    #             user=request.user,
-    #             course=course,
-    #             value=course.price,
-    #             status='pending',
-    #             payment_method=payment_method,
-    #             payer_email=customer_form.cleaned_data['email'],
-    #             payer_document=customer_form.cleaned_data['cpf']
-    #         )
-            
-    #         if payment_method == 'credit_card':
-    #             purchase.installments = payment_form.cleaned_data['installments']
-    #             purchase.save()
-            
-    #         # Marcar a sessão de checkout como concluída
-    #         checkout_session.is_completed = True
-    #         checkout_session.save()
-            
-    #         # Limpar a sessão de checkout
-    #         if 'checkout_session_id' in request.session:
-    #             del request.session['checkout_session_id']
-            
-    #         # Redirecionar para a página de sucesso
-    #         return redirect('products:checkout_success', purchase_id=purchase.id)
-    # else:
-    #     # Pré-preencher o email se o usuário tiver um
-    #     initial_data = {}
-    #     if request.user.email:
-    #         initial_data['email'] = request.user.email
-    #     if hasattr(request.user, 'first_name') and hasattr(request.user, 'last_name'):
-    #         if request.user.first_name or request.user.last_name:
-    #             initial_data['full_name'] = f"{request.user.first_name} {request.user.last_name}".strip()
-        
-    #     customer_form = CustomerInfoForm(initial=initial_data)
-
-    #     if payment_method == 'credit_card':
-    #         payment_form = CreditCardForm()
-    #     else:
-    #         payment_form = None
-    
-    # return render(request, 'products/checkout/payment.html', {
-    #     'customer_form': customer_form,
-    #     'payment_form': payment_form,
-    #     'course': course,
-    #     'checkout_session': checkout_session,
-    #     'payment_method': payment_method,
-    #     'payment_settings': payment_settings
-    # })
 
     try:
         checkout_session = CheckoutSession.objects.select_related('course').get(session_id=checkout_session_id)
@@ -205,6 +99,9 @@ def checkout_payment(request):
         'mercadopago_public_key': public_key,
         'payment_amount': course.price
     }
+
+    logger.info(f"Renderizando template de pagamento para o curso {course.title}")
+    
     return render(request, "products/checkout/payment.html", context)
 
 @login_required
@@ -267,15 +164,3 @@ def get_checkout_session(request):
 
 
 
-"""
-        Explique a funcionalidade dos seguintes trechos de código:
-
-card_number = self.cleaned_data.get('card_number')
-
-
-def clean_expiry_date(self):
-        Valida o formato da data de validade
-        expiry_date = self.cleaned_data.get('expiry_date')
-        if expiry_date:
-            # Remover barras e espaços
-"""
