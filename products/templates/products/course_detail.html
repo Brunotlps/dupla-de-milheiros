@@ -100,30 +100,30 @@
 
 
 {% block extra_js %}
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const lessons = document.querySelectorAll(".lesson-item");
-    
-        lessons.forEach((lesson, index) => {
-            const title = lesson.querySelector(".lesson-title").innerText;
-            const key = `lesson-viewed-${title}`;
-    
-            if (localStorage.getItem(key)) {
-                lesson.classList.add("viewed");
+    <script>
+document.addEventListener("DOMContentLoaded", () => {
+    const lessons = document.querySelectorAll(".lesson-item");
+
+    lessons.forEach((lesson, index) => {
+        const title = lesson.querySelector(".lesson-title").innerText;
+        const key = `lesson-viewed-${title}`;
+
+        if (localStorage.getItem(key)) {
+            lesson.classList.add("viewed");
+        }
+
+        lesson.addEventListener("click", () => {
+            lesson.classList.toggle("viewed");
+            if (lesson.classList.contains("viewed")) {
+                localStorage.setItem(key, true);
+            } else {
+                localStorage.removeItem(key);
             }
-    
-            lesson.addEventListener("click", () => {
-                lesson.classList.toggle("viewed");
-                if (lesson.classList.contains("viewed")) {
-                    localStorage.setItem(key, true);
-                } else {
-                    localStorage.removeItem(key);
-                }
-            });
         });
     });
-    </script>
-    
+});
+</script>
 {% endblock %}
+
 
 {% endblock %}
