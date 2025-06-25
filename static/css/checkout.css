@@ -69,6 +69,8 @@
     color: #198754;
 }
 
+
+
 /* Payment methods section */
 .payment-methods {
     display: flex;
@@ -128,6 +130,53 @@
 .fade-in {
     animation: fadeIn 0.8s ease forwards;
     opacity: 0;
+}
+
+#paymentBrick_container {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    text-align: center;
+}
+
+
+/* Estilo para o card de resumo do pedido */
+.card {
+    border: 1px solid whitesmoke; /* Borda leve */
+    border-radius: 8px; /* Bordas arredondadas */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra leve */
+    margin-top: 20px; /* Espaço acima */
+}
+
+.card-body {
+    padding: 20px; /* Espaço interno */
+    background-color: whitesmoke; /* Fundo branco */
+}
+
+.card-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #343a40; /* Cinza escuro */
+}
+
+.card p {
+    font-size: 1.1rem;
+    color: #6c757d; /* Cinza claro */
+}
+
+.card hr {
+    border-top: 1px solid #dee2e6; /* Linha divisória leve */
+}
+
+
+@media (max-width: 768px) {
+    #paymentBrick_container {
+        padding: 15px; /* Reduz o padding em telas menores */
+        font-size: 0.9rem; /* Ajusta o tamanho da fonte */
+    }
 }
 
 @keyframes fadeIn {

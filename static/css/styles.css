@@ -299,25 +299,25 @@ img.img-fluid.rounded {
 /* Estilo para os cards de curso */
 .course-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border-radius: 8px;
+    border-radius: 12px; /* Bordas mais arredondadas para um visual moderno */
     overflow: hidden;
     border: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    background-color: whitesmoke;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Sombra mais pronunciada */
+    background-color: #ffffff; /* Fundo branco para contraste */
 }
 
 .course-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px); /* Efeito de "flutuar" mais perceptível */
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15); /* Sombra mais intensa no hover */
 }
 
 /* Container para a imagem com altura fixa */
 .course-image-container {
-    height: 200px; /* Altura fixa para todas as imagens */
+    height: 220px; /* Altura ajustada para melhor proporção */
     overflow: hidden;
     position: relative;
+    border-bottom: 2px solid #ffc107; /* Linha de destaque abaixo da imagem */
 }
-
 /* Estilo para a imagem dentro do container */
 .course-image {
     width: 100%;
@@ -328,7 +328,7 @@ img.img-fluid.rounded {
 
 /* Estilo para o título do curso */
 .course-title {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     font-weight: 600;
     margin-bottom: 0.75rem;
     color: #333;
@@ -338,13 +338,15 @@ img.img-fluid.rounded {
 .course-description {
     color: #666;
     margin-bottom: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
 }
 
 /* Estilo para o preço */
 .course-price {
     font-weight: bold;
     color: #28a745; /* Verde para destacar o preço */
-    font-size: 1.1rem;
+    font-size: 1.2rem;
 }
 
 /* Estilo para o botão */
@@ -352,21 +354,25 @@ img.img-fluid.rounded {
     background-color: #ffc107; /* Amarelo para combinar com o tema */
     border-color: #ffc107;
     color: #212529;
-    font-weight: 500;
-    padding: 0.5rem 1.5rem;
+    font-weight: 600; /* Botão mais destacado */
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px; /* Bordas arredondadas */
+    transition: all 0.3s ease;
 }
 
 .btn-course-details:hover {
     background-color: #e0a800;
     border-color: #e0a800;
     color: #212529;
+    transform: translateY(-2px); /* Pequeno efeito de "levantar" */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra no hover */
 }
 
 
 /* Estilização elegante para o conteúdo principal */
 .content-container {
     padding: 2.5rem;
-    background-color: transparent;
+    background-color: #121246;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     margin-bottom: 2rem;
@@ -394,7 +400,6 @@ img.img-fluid.rounded {
     background-color: transparent;
     padding: 2rem 0;
     margin-bottom: 2rem;
-
     color: #FFD942;
 }
 
@@ -448,10 +453,11 @@ img.img-fluid.rounded {
 /* Container de imagem grande */
 
 .course-image-large-container {
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     height: 400px;
+    border: 2px solid #ffc107; 
 }
 
 .course-image-large {
@@ -463,10 +469,10 @@ img.img-fluid.rounded {
 
 /* Card de compra */
 .course-purchase-card {
-    background-color: transparent;
+    background-color: transparyent;
     border-radius: 10px;
     padding: 2rem;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
@@ -593,6 +599,13 @@ img.img-fluid.rounded {
     text-align: center;
     padding: 1rem 0;
 }
+
+.lesson-item.viewed {
+    background-color: #d4edda;
+    color: #155724;
+    text-decoration: line-through;
+}
+
 
 /* Botões de compra e acesso */
 .btn-primary {

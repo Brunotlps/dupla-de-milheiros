@@ -59,15 +59,12 @@
                         {% for module in modules %}
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="heading{{ module.id }}">
-                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ module.id }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ module.id }}">
+                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapseModule{{ module.id }}" aria-expanded="{{ forloop.first }}" aria-controls="collapseModule{{ module.id }}">
                                     {{ module.title }}
                                 </button>
                             </h2>
-                            <div id="collapse{{ module.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ module.id }}" data-bs-parent="#courseModules">
+                            <div id="collapseModule{{ module.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ module.id }}" data-bs-parent="#courseModules">
                                 <div class="accordion-body">
-                                    {% if module.description %}
-                                        <p class="module-description">{{ module.description }}</p>
-                                    {% endif %}
                                     
                                     <ul class="lesson-list">
                                         {% for lesson in module.lessons.all %}
@@ -77,17 +74,18 @@
                                                 <span class="lesson-title">{{ lesson.title }}</span>
                                             </div>
                                             {% if lesson.duration %}
-                                                <span class="lesson-duration">{{ lesson.duration }} min</span>
+                                                <span class="lesson-duration" title="Duration in minutes">{{ lesson.duration }} min</span>
                                             {% endif %}
                                         </li>
                                         {% empty %}
-                                        <li class="no-lessons">Nenhuma aula disponível neste módulo.</li>
+                                        <li class="no-lessons">Nenhum módulo disponível para este curso.</li>
                                         {% endfor %}
                                     </ul>
                                 </div>
                             </div>
                         </div>
                         {% empty %}
+                        <!-- This div is displayed when there are no modules available for the course -->
                         <div class="no-modules">Nenhum módulo disponível para este curso.</div>
                         {% endfor %}
                     </div>
@@ -96,4 +94,36 @@
         </div>
     </div>
 </div>
+
+
+
+
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const lessons = document.querySelectorAll(".lesson-item");
+    
+        lessons.forEach((lesson, index) => {
+            const title = lesson.querySelector(".lesson-title").innerText;
+            const key = `lesson-viewed-${title}`;
+    
+            if (localStorage.getItem(key)) {
+                lesson.classList.add("viewed");
+            }
+    
+            lesson.addEventListener("click", () => {
+                lesson.classList.toggle("viewed");
+                if (lesson.classList.contains("viewed")) {
+                    localStorage.setItem(key, true);
+                } else {
+                    localStorage.removeItem(key);
+                }
+            });
+        });
+    });
+    </script>
+    
+{% endblock %}
+
 {% endblock %}

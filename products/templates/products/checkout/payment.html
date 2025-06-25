@@ -20,10 +20,26 @@
 
 <div class="container mt-5 mb-5">
     <div class="row">
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title text-center">Resumo do Pedido</h5>
+                    <hr>
+                    <p><strong>Produto:</strong> {{ course.title }}</p>
+                    <p><strong>Descrição:</strong> {{ course.description }}</p>
+                    <p><strong>Preço:</strong> R$ {{ payment_amount }}</p>
+                    <hr>
+                    <p class="text-center"><strong>Total:</strong> R$ {{ payment_amount }}</p>
+                </div>
+            </div>
+        </div>
+
         <div class="col-md-8">
-            <h2>Detalhes do Pagamento</h2>
-            <p>Curso: <strong>{{ course.title }}</strong></p>
-            <p>Valor: <strong>R$ {{ payment_amount }}</strong></p>
+
+            <div id="loadingMessage" class="text-center">
+                <p>Carregando opções de pagamento...</p>
+            </div>
             
             <!-- Container onde o Payment Brick será renderizado -->
             <div id="paymentBrick_container"></div>
@@ -41,17 +57,7 @@
             </form>
 
         </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Resumo do Pedido</h5>
-                    <p>Curso: {{ course.title }}</p>
-                    <p>Preço: R$ {{ payment_amount }}</p>
-                    <hr>
-                    <p><strong>Total: R$ {{ payment_amount }}</strong></p>
-                </div>
-            </div>
-        </div>
+        
     </div>
 </div>
 
@@ -69,6 +75,8 @@
 
     console.log("Debug: Public Key:", publicKey);
     console.log("Debug: Payment Amount:", paymentAmountValue);
+    
+    
 
     if (!publicKey) {
         console.error("Erro Crítico: Chave pública do Mercado Pago não definida.");
@@ -83,6 +91,21 @@
 
         const renderPaymentBrick = async (bricksBuilder) => {
             console.log("Debug: Dentro de renderPaymentBrick.");
+
+            const loadingMessage = document.getElementById("loadingMessage");
+            loadingMessage.style.display = "block"; // Exibe a mensagem de carregamento
+
+            try {
+                window.paymentBrickController = await bricksBuilder.create("payment", "paymentBrick_container", settings);
+                console.log("Sucesso: Payment Brick criado.");
+            } catch (error) {
+                console.error("Erro ao inicializar Payment Brick:", error);
+                // alert("Erro ao carregar opções de pagamento. Tente novamente.");
+            } finally {
+                loadingMessage.style.display = "none"; // Oculta a mensagem de carregamento
+            }
+
+            
 
             const formattedAmount = paymentAmountValue.toFixed(2);
             console.log("Debug: Valor formatado para API:", formattedAmount);
