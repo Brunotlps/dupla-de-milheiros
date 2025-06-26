@@ -1,40 +1,36 @@
-# Arquivos de log
+# === Arquivos de Log e Cache ===
 *.log
-
-# Arquivos de cache do Python
+debug.log
 *.pyc
 *.pyo
 *.pyd
 __pycache__/
 
-# Diretórios de ambientes virtuais
+# === Ambiente Virtual ===
 venv/
 env/
 
-# Configurações locais
-*.env
+# === Configurações Sensíveis ===
 .env
 
-# Arquivos de banco de dados SQLite (se estiver usando)
+# === Banco de Dados ===
+*.sqlite3
 db.sqlite3
 
-# Arquivos de migração do Django (opcional, se você quiser gerá-los localmente)
-migrations/
-
-# Arquivos de mídia e uploads (se não forem necessários no repositório)
-media/
-
-# Arquivos de compilação
+# === Build e Distribuição ===
 *.egg-info/
 *.dist-info/
 build/
 dist/
 
-# Arquivos do VS Code
+# === Editor/IDE ===
 .vscode/
-
-# Arquivos do sistema operacional
 .DS_Store
 Thumbs.db
 
-debug.log
+# === Arquivos de Upload e Estáticos (em produção) ===
+media/
+staticfiles/
+
+# === Django Migrations (opcional: se quiser manter no repo, comente esta linha) ===
+# migrations/
