@@ -52,13 +52,13 @@ Painel de administração completo via *Django Admin*
     NEWSAPI_KEY=...
 
 5. Aplique as migrações:
-    python [manage.py](http://_vscodecontentref_/1) migrate
+    python manage.py migrate
 
 6. Crie um superusuário:
-    python [manage.py](http://_vscodecontentref_/2) createsuperuser
+    python manage.py createsuperuser
 
 # 5. Como Rodar
-    python [manage.py](http://_vscodecontentref_/4) runserver
+    python manage.py runserver
 
     Acesse em http://localhost:8000
 
