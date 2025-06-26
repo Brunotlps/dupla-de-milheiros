@@ -92,4 +92,4 @@ MIT. Veja o arquivo LICENSE para mais detalhes.
 Autor: Bruno Teixeira Lopes
 Email: brunoteixlps@gmail.com
 
-LinkedIn: linkedin.com/in/brunotlps/
+LinkedIn: [linkedin.com/in/brunotlps/](linkedin.com/in/brunotlps/)
