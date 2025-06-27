@@ -115,9 +115,9 @@ def checkout_process_payment(request):
     try:
         # Recuperando os dados do Payment Brick
         data = json.loads(request.body.decode('utf-8'))
-        payment_data = data.get('formData')
+        form_data = data.get('formData')
 
-        if not payment_data:
+        if not form_data:
             return JsonResponse({'error': 'Dados de pagamento inválidos'}, status=400)
         
         # Recuperando a sessão de checkout atual
@@ -138,38 +138,103 @@ def checkout_process_payment(request):
         except CheckoutSession.DoesNotExist:
             return JsonResponse({'error': 'Sessão de checkout não encontrada'}, status=404)
         
+        payment_method_id = form_data.get('payment_method_id')
+
         course = checkout_session.course
         # Inicializando o SDK do Mercado Pago
         sdk = get_mercadopago_sdk()
 
-        payment_data = {
+        mp_payment_data = {
             "transaction_amount": float(course.price),
             "description": f"Curso: {course.title}",
-            "installments": int(payment_data.get("installments")),
-            "payment_method_id": payment_data.get("payment_method_id"),
+            "payment_method_id": payment_method_id,
             "payer": {
-                "email": payment_data.get("payer", {}).get("email"),
+                "email": form_data.get("payer", {}).get("email"),
                 "identification": {
-                    "type": payment_data.get("payer", {}).get("identification", {}).get("type", "CPF"),
-                    "number": payment_data.get("payer", {}).get("identification", {}).get("number")
+                    "type": form_data.get("payer", {}).get("identification", {}).get("type", "CPF"),
+                    "number": form_data.get("payer", {}).get("identification", {}).get("number")
                 },
-                "first_name": payment_data.get("payer", {}).get("first_name", ""),
+                "first_name": form_data.get("payer", {}).get("first_name", ""),
             },
         }
+        
+        # Verificando campos obrigatórios
+        if not form_data.get('payment_method_id'):
+            return JsonResponse({'error': 'Método de pagamento é obrigatório'}, status=400)
+        
+        if payment_method_id == 'credit_card':
+            if not form_data.get('token'):
+                return JsonResponse({'error': 'Token do cartão de crédito é obrigatório'}, status=400)
+
+            if not form_data.get('installments'):
+                return JsonResponse({'error': 'Número de parcelas é obrigatório'}, status=400)
+
+            if not form_data.get('issuer_id'):
+                return JsonResponse({'error': 'ID do emissor é obrigatório'}, status=400)
+            
+            payer = form_data.get('payer', {})
+            if not payer.get('email'):
+                return JsonResponse({'error': "Campo 'payer.email' obrigatório."}, status=400)
+
+            identification = payer.get('identification', {})
+            if not identification.get('number'):
+                return JsonResponse({'error': "Campo 'payer.identification.number' obrigatório."}, status=400)
+        
+        elif payment_method_id == 'pix':
+            payer = form_data.get('payer', {})
+            if not payer.get('email'):
+                return JsonResponse({'error': "Campo 'payer.email' obrigatório."}, status=400)
+            identification = payer.get('identification', {})
+            if not identification.get('number'):
+                return JsonResponse({'error': "Campo 'payer.identification.number' obrigatório."}, status=400)
+                
+        elif payment_method_id == 'bolbradesco':
+            # Verificando se o pagador tem CPF ou CNPJ
+            payer = form_data.get('payer', {})
+            if not payer.get('email'):
+                return JsonResponse({'error': "Campo 'payer.email' obrigatório."}, status=400)
+
+            identification = payer.get('identification', {})
+            if not identification.get('number'):
+                return JsonResponse({'error': "Campo 'payer.identification.number' obrigatório."}, status=400)
+        
+        else:
+            return JsonResponse({'error': 'Método de pagamento não suportado'}, status=400)
 
         # Adicionando dados do cartão de crédito se estiverem presentes
-        if payment_data.get("payment_method_id") == 'credit_card':
-            payment_data["token"] = payment_data.get("token")
-            payment_data["installments"] = int(payment_data.get("installments", 1))
-            payment_data["issuer_id"] = payment_data.get("issuer_id")
-            payment_data["payment_method_id"] = payment_data.get("payment_method_id")
+        if mp_payment_data.get("payment_method_id") == 'credit_card':
+            mp_payment_data["token"] = mp_payment_data.get("token")
+            mp_payment_data["installments"] = int(mp_payment_data.get("installments", 1))
+            mp_payment_data["issuer_id"] = mp_payment_data.get("issuer_id")
+            mp_payment_data["payment_method_id"] = mp_payment_data.get("payment_method_id")
 
+        elif mp_payment_data.get("payment_method_id") == 'pix':
+            pass
 
-        payment_response = sdk.payment().create(payment_data)
+        elif mp_payment_data.get("payment_method_id") == 'bolbradesco':
+            from datetime import datetime, timedelta
+            # Definindo a data de expiração para 3 dias a partir de agora
+            mp_payment_data["date_of_expiration"] = (datetime.now() + timedelta(days=3)).isoformat()
+            if mp_payment_data.get('payer_document'):
+                mp_payment_data["payer"]["identification"] = {
+                    "type": "CPF",
+                    "number": mp_payment_data.get('payer_document')
+                }
+        else:
+            return JsonResponse({'error': 'Método de pagamento não suportado'}, status=400)
+        
+        # Criando o pagamento no Mercado Pago
+        logger.info(f"Processando pagamento para o curso {course.title} com método {mp_payment_data.get('payment_method_id')}")
+        logger.info(f"Dados do pagamento: {mp_payment_data}")
+        logger.info(f"Dados do pagador: {mp_payment_data.get('payer', {})}")   
+
+        payment_response = sdk.payment().create(mp_payment_data)
+
+        logger.info(f"Resposta do pagamento: {payment_response}")
 
         # Processando a resposta do pagamento
         if payment_response['status'] == 201:
-            payment_data = payment_response["response"]
+            mp_payment_data = payment_response["response"]
             
             # Criando ou atualizando o registro de compra
             purchase, created = Purchases.objects.get_or_create(
@@ -177,17 +242,17 @@ def checkout_process_payment(request):
                 course=course,
                 defaults={
                     'status': 'pending',
-                    'payment_method': payment_data.get('payment_method_id'),
-                    'transaction_id': payment_data.get('id'),
-                    'amount': payment_data.get('transaction_amount'),
-                    'payer_email': payment_data['payer'].get('email'),
-                    'payer_document': payment_data['payer']['identification'].get('number'),
-                    'gateway_response': payment_data
+                    'payment_method': mp_payment_data.get('payment_method_id'),
+                    'transaction_id': mp_payment_data.get('id'),
+                    'value': mp_payment_data.get('transaction_amount'),
+                    'payer_email': mp_payment_data['payer'].get('email'),
+                    'payer_document': mp_payment_data['payer']['identification'].get('number'),
+                    'gateway_response': mp_payment_data
                 }
             )
 
             # Atualizando o status da compra
-            payment_status = payment_data.get("status")
+            payment_status = mp_payment_data.get("status")
             if payment_status == 'approved':
                 purchase.status = 'approved'
                 messages.success(request, "Pagamento aprovado com sucesso!")
@@ -211,11 +276,11 @@ def checkout_process_payment(request):
                 messages.error(request, "Pagamento estornado.") 
 
             # Atualizando os detalhes da compra para salvar informações do pagamento
-            purchase.transaction_code = payment_data.get('id')
-            purchase.installments = payment_data.get('installments', 1)
-            purchase.payment_url = payment_data.get('transaction_details', {}).get('external_resource_url')
-            purchase.payment_expiration = payment_data.get('transaction_details', {}).get('expiration_date')
-            purchase.gateway_response = payment_data    
+            purchase.transaction_code = mp_payment_data.get('id')
+            purchase.installments = mp_payment_data.get('installments', 1)
+            purchase.payment_url = mp_payment_data.get('transaction_details', {}).get('external_resource_url')
+            purchase.payment_expiration = mp_payment_data.get('transaction_details', {}).get('expiration_date')
+            purchase.gateway_response = mp_payment_data    
 
             purchase.save()
 
@@ -245,32 +310,42 @@ def checkout_process_payment(request):
                 return JsonResponse({
                     'status': 'error',
                     'message': "Pagamento rejeitado. Verifique os dados e tente novamente.",
-                    'error_details': payment_data.get('status_detail', 'Erro desconhecido')
+                    'error_details': mp_payment_data.get('status_detail', 'Erro desconhecido')
                 }, status=400)
         else:
-            return JsonResponse({
-                'status': 'error',
-                'message': "Erro ao processar o pagamento.",
-                'error_details': payment_response.get("response", {}).get("message", "Erro desconhecido")
-            }, status=400)
-    
+            # Tratamento de erros 
+            error_status = payment_response.get("status", 0)
+            error_message = payment_response.get("response", {}). get("message", "Erro desconhecido")
+            logger.error(f"Erro ao processar pagamento: {error_message} (Status: {error_status})")
+
+            if error_status == 400:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': "Dados de pagamento inválidos.",
+                    'error_details': error_message
+                }, status=400)
+            elif error_status == 401:
+                # Erro de autenticação (credencias inválidas)
+                return JsonResponse({
+                    'status': 'error',
+                    'message': "Erro de autenticação com o gateway de pagamento, verurifique as credenciais.",
+                    'error_details': error_message
+                }, status=500)
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': "Erro ao processar o pagamento.",
+                    'error_details': error_message
+                }, status=500)
+            
 
     except Exception as e:
-        logger.error(f"Erro ao processar pagamento: {e}")
+        logger.error(f"Erro ao processar pagamento: {str(e)}", exc_info=True)
         return JsonResponse({
             'status': 'error',
             'message': "Erro interno ao processar o pagamento.",
             'error_details': str(e)
         }, status=500)
-
-
-
-
-
-
-
-        
-
 
 
 @login_required
