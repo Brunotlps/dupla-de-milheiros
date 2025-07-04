@@ -348,6 +348,175 @@ def checkout_process_payment(request):
         }, status=500)
 
 
+
+# @csrf_exempt
+# def webhook_mp(request):
+
+    # signature = request.headers.get('X-signature')
+    # if not signature:
+    #     logger.error("Webhook recebido sem assinatura.")
+    #     return JsonResponse({'error': 'Assinatura ausente'}, status=400) 
+    
+    # if request.method == 'POST':
+    #     data = json.loads(request.body.decode('utf-8'))
+    #     logger.info(f"Webhook recebido: {data}")
+        
+    #     # Verificando o tipo de notificação
+    #     if data.get('type') == 'payment':
+    #         logger.info("Processando notificação de pagamento do Mercado Pago")
+    #         # Verifica se o payload contém os dados necessários
+    #         payload = data.get('data', {})
+    #         if payload is None:
+    #             logger.warning("Webhook recebido sem payload de dados.")
+    #             return JsonResponse({'error': 'Payload de dados ausente'}, status=400)
+
+
+    #         payment_id = payload.get('id')
+    #         if not payment_id:
+    #             logger.error("Webhook recebido sem ID de pagamento.")
+    #             return JsonResponse({'error': 'ID de pagamento ausente'}, status=400)
+
+    #         logger.info(f"ID do pagamento recebido: {payment_id}")
+
+    #         sdk = get_mercadopago_sdk()
+
+    #         # Recuperando as informações do pagamento
+    #         try:
+    #             payment_info = sdk.payment().get(payment_id)
+    #             logger.info(f"Informações do pagamento: {payment_info}")
+
+    #             if payment_info['status'] == 200:
+    #                 payment_data = payment_info['response']
+    #                 transaction_id = payment_data.get('id')
+    #                 status = payment_data.get('status')
+    #                 status_detail = payment_data.get('status_detail')
+                    
+    #                 # Buscando a compra associada ao pagamento
+    #                 try:
+    #                     purchase = Purchases.objects.get(
+    #                         transaction_code = str(payment_id),
+    #                     )
+                        
+    #                     payment_status = payment_data.get('status')
+    #                     new_status = None
+    #                     if payment_status == 'approved':
+    #                         new_status = 'approved'
+    #                     elif payment_status == 'pending':
+    #                         new_status = 'pending'
+    #                     elif payment_status in ['rejected', 'canceled', 'refunded', 'charged_back']:
+    #                         new_status = 'canceled'
+
+    #                     # Tratamento de idempotencia
+    #                     if new_status and purchase.status != new_status:
+    #                         old_status = purchase.status
+    #                         purchase.status = new_status
+
+                        
+    #                         purchase.save()
+
+    #                         # Log da atualização do status da compra
+    #                         logger.info(f"Compra {purchase.id} atualizada para o status: {purchase.status}")
+                            
+                        
+    #                     else:
+    #                         logger.info(f"Compra {purchase.id} já está no status: {purchase.status}, nenhuma atualização necessária.")      
+                        
+    #                     return JsonResponse({'status': 'success', 'message': 'Pagamento processado com sucesso'}, status=200)
+
+                    
+    #                 except Purchases.DoesNotExist:
+    #                     logger.error(f"Compra não encontrada para o ID de transação: {transaction_id}")
+    #                     return JsonResponse({'error': 'Compra não encontrada'}, status=404)
+    #             else:
+    #                 logger.error(f"Erro ao recuperar informações do pagamento: {payment_info.get('message', 'Erro desconhecido')}")
+    #                 return JsonResponse({'error': 'Erro ao recuperar informações do pagamento'}, status=400)
+
+    #         except json.JSONDecodeError as e:
+    #             logger.error(f"Erro ao recuperar informações do pagamento: {str(e)}")
+    #             return JsonResponse({'error': 'Erro ao recuperar informações do pagamento'}, status=500)
+            
+    #     return JsonResponse({'status': 'ignored'})
+    
+    # else:
+    #     logger.warning("Webhook recebido com método diferente de POST.")
+    #     return JsonResponse({'error': 'Método não permitido'}, status=405)
+@csrf_exempt
+def webhook_mp(request):
+    signature = request.headers.get('X-signature')
+    if not signature:
+        logger.error("Webhook recebido sem assinatura.")
+        return JsonResponse({'error': 'Assinatura ausente'}, status=400)
+
+    if request.method != 'POST':
+        logger.warning("Webhook recebido com método diferente de POST.")
+        return JsonResponse({'error': 'Método não permitido'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except json.JSONDecodeError:
+        logger.error("Webhook recebido com JSON inválido.")
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    logger.info(f"Webhook recebido: {data}")
+
+    if data.get('type') != 'payment':
+        return JsonResponse({'status': 'ignored'}, status=200)
+
+    payload = data.get('data', {})
+    if not payload:
+        logger.warning("Webhook recebido sem payload de dados.")
+        return JsonResponse({'error': 'Payload de dados ausente'}, status=400)
+
+    payment_id = payload.get('id')
+    if not payment_id:
+        logger.error("Webhook recebido sem ID de pagamento.")
+        return JsonResponse({'error': 'ID de pagamento ausente'}, status=400)
+
+    sdk = get_mercadopago_sdk()
+    try:
+        payment_info = sdk.payment().get(payment_id)
+    except Exception as e:
+        logger.error(f"Erro ao recuperar informações do pagamento: {str(e)}")
+        return JsonResponse({'error': 'Erro ao recuperar informações do pagamento'}, status=500)
+
+    if payment_info.get('status') != 200:
+        logger.error(f"Erro ao recuperar informações do pagamento: {payment_info.get('message', 'Erro desconhecido')}")
+        return JsonResponse({'error': 'Erro ao recuperar informações do pagamento'}, status=400)
+
+    payment_data = payment_info['response']
+    transaction_id = payment_data.get('id')
+    payment_status = payment_data.get('status')
+
+    # Mapeamento correto dos status
+    status_map = {
+        'approved': 'approved',
+        'pending': 'pending',
+        'rejected': 'rejected',
+        'canceled': 'canceled',
+        'refunded': 'refunded',
+        'in_process': 'in_process',
+        'charged_back': 'charged_back',
+        'in_mediation': 'in_mediation',
+    }
+    new_status = status_map.get(payment_status)
+
+    try:
+        purchase = Purchases.objects.get(transaction_code=str(payment_id))
+    except Purchases.DoesNotExist:
+        logger.error(f"Compra não encontrada para o ID de transação: {transaction_id}")
+        return JsonResponse({'error': 'Compra não encontrada'}, status=404)
+
+    if new_status and purchase.status != new_status:
+        old_status = purchase.status
+        purchase.status = new_status
+        purchase.save()
+        logger.info(f"Compra {purchase.id} atualizada de {old_status} para {purchase.status}")
+    else:
+        logger.info(f"Compra {purchase.id} já está no status: {purchase.status}, nenhuma atualização necessária.")
+
+    return JsonResponse({'status': 'success', 'message': 'Pagamento processado com sucesso'}, status=200)
+    
+
 @login_required
 def checkout_success(request, purchase_id):
      purchase = get_object_or_404(Purchases, id=purchase_id, user=request.user)

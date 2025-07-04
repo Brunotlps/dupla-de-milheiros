@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.18.11','0.0.0.0','localhost', '127.0.0.1', '172.17.0.1/16']  # Substitua 192.168.0.100 pelo seu IP local
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '6338-2804-690-33b3-8700-a7a1-f174-31ee-3bf9.ngrok-free.app']  # Substitua 192.168.0.100 pelo seu IP local
 
 
 # Application definition

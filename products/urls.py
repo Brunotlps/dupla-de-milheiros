@@ -12,6 +12,8 @@ urlpatterns = [
     path('checkout/payment/', views.checkout_payment, name='checkout_payment'),
     path('checkout/proccess-payment/', views.checkout_process_payment, name='checkout_process_payment'),
     
+    path('webhook/mercadopago/', views.webhook_mp, name = 'webhook_mp'),
+
     path('checkout/success/<int:purchase_id>/', views.checkout_success, name='checkout_success'),
     path('checkout/cancel/', views.checkout_cancel, name='checkout_cancel'),
     path('checkout/<slug:course_slug>/', views.checkout_start, name='checkout_start'), # Movido para depois das URLs mais específicas
