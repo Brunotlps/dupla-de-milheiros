@@ -112,10 +112,14 @@ def checkout_payment(request):
 @require_POST
 @login_required
 def checkout_process_payment(request):
+    logger.info("Iniciando o processamento do pagamento")
+
     try:
         # Recuperando os dados do Payment Brick
         data = json.loads(request.body.decode('utf-8'))
+        logger.info(f'Payload recebido no checkout_process_payment: {data}')
         form_data = data.get('formData')
+        logger.info(f'formData recebido: {form_data}')
 
         if not form_data:
             return JsonResponse({'error': 'Dados de pagamento inválidos'}, status=400)
@@ -138,11 +142,12 @@ def checkout_process_payment(request):
         except CheckoutSession.DoesNotExist:
             return JsonResponse({'error': 'Sessão de checkout não encontrada'}, status=404)
         
-        payment_method_id = form_data.get('payment_method_id')
+        
 
         course = checkout_session.course
         # Inicializando o SDK do Mercado Pago
         sdk = get_mercadopago_sdk()
+        payment_method_id = form_data.get('payment_method_id')
 
         mp_payment_data = {
             "transaction_amount": float(course.price),
@@ -162,24 +167,29 @@ def checkout_process_payment(request):
         if not form_data.get('payment_method_id'):
             return JsonResponse({'error': 'Método de pagamento é obrigatório'}, status=400)
         
-        if payment_method_id == 'credit_card':
+        CREDIT_CARD_METHODS = ['master', 'visa', 'amex', 'elo', 'diners', 'hipercard', 'discover', 'jcb', 'aura', 'naranja', 'cabal', 'tarshop', 'argencard']
+
+
+        if payment_method_id in CREDIT_CARD_METHODS:
+            logger.info("Entrou no bloco de cartão de crédito")
             if not form_data.get('token'):
+                logger.warning(f"Token ausente ou inválido: {form_data.get('token')}")
                 return JsonResponse({'error': 'Token do cartão de crédito é obrigatório'}, status=400)
-
-            if not form_data.get('installments'):
+            if form_data.get('installments') in [None, '', 0]:
+                logger.warning(f"Installments ausente ou inválido: {form_data.get('installments')}")
                 return JsonResponse({'error': 'Número de parcelas é obrigatório'}, status=400)
-
             if not form_data.get('issuer_id'):
+                logger.warning(f"Issuer_id ausente ou inválido: {form_data.get('issuer_id')}")
                 return JsonResponse({'error': 'ID do emissor é obrigatório'}, status=400)
-            
             payer = form_data.get('payer', {})
             if not payer.get('email'):
+                logger.warning("Payer.email ausente")
                 return JsonResponse({'error': "Campo 'payer.email' obrigatório."}, status=400)
-
             identification = payer.get('identification', {})
             if not identification.get('number'):
+                logger.warning("Payer.identification.number ausente")
                 return JsonResponse({'error': "Campo 'payer.identification.number' obrigatório."}, status=400)
-        
+            
         elif payment_method_id == 'pix':
             payer = form_data.get('payer', {})
             if not payer.get('email'):
@@ -201,27 +211,23 @@ def checkout_process_payment(request):
         else:
             return JsonResponse({'error': 'Método de pagamento não suportado'}, status=400)
 
-        # Adicionando dados do cartão de crédito se estiverem presentes
-        if mp_payment_data.get("payment_method_id") == 'credit_card':
-            mp_payment_data["token"] = mp_payment_data.get("token")
-            mp_payment_data["installments"] = int(mp_payment_data.get("installments", 1))
-            mp_payment_data["issuer_id"] = mp_payment_data.get("issuer_id")
-            mp_payment_data["payment_method_id"] = mp_payment_data.get("payment_method_id")
-
-        elif mp_payment_data.get("payment_method_id") == 'pix':
+        if payment_method_id in CREDIT_CARD_METHODS:
+            mp_payment_data['token'] = form_data.get['token']
+            mp_payment_data['installments'] = int(form_data.get('installments', 1))
+            mp_payment_data['issuer_id'] = form_data.get['issuer_id']
+        elif payment_method_id == 'pix':
             pass
-
-        elif mp_payment_data.get("payment_method_id") == 'bolbradesco':
+        elif payment_method_id == 'bolbradesco':
             from datetime import datetime, timedelta
-            # Definindo a data de expiração para 3 dias a partir de agora
+            # Configurando dados específicos para Boleto Bancário
             mp_payment_data["date_of_expiration"] = (datetime.now() + timedelta(days=3)).isoformat()
-            if mp_payment_data.get('payer_document'):
+            if form_data.get('payer_document'):
                 mp_payment_data["payer"]["identification"] = {
                     "type": "CPF",
-                    "number": mp_payment_data.get('payer_document')
-                }
-        else:
-            return JsonResponse({'error': 'Método de pagamento não suportado'}, status=400)
+                    "number": form_data.get('payer_document')
+                }         
+            else:
+                return  JsonResponse({'error': "Campo 'payer_document' obrigatório,"}, status=400)
         
         # Criando o pagamento no Mercado Pago
         logger.info(f"Processando pagamento para o curso {course.title} com método {mp_payment_data.get('payment_method_id')}")

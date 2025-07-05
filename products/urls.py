@@ -10,7 +10,7 @@ urlpatterns = [
     
     # URLs de Checkout
     path('checkout/payment/', views.checkout_payment, name='checkout_payment'),
-    path('checkout/proccess-payment/', views.checkout_process_payment, name='checkout_process_payment'),
+    path('checkout/process-payment/', views.checkout_process_payment, name='checkout_process_payment'),
     
     path('webhook/mercadopago/', views.webhook_mp, name = 'webhook_mp'),
 
