@@ -212,9 +212,9 @@ def checkout_process_payment(request):
             return JsonResponse({'error': 'Método de pagamento não suportado'}, status=400)
 
         if payment_method_id in CREDIT_CARD_METHODS:
-            mp_payment_data['token'] = form_data.get['token']
+            mp_payment_data['token'] = form_data.get('token')
             mp_payment_data['installments'] = int(form_data.get('installments', 1))
-            mp_payment_data['issuer_id'] = form_data.get['issuer_id']
+            mp_payment_data['issuer_id'] = form_data.get('issuer_id')
         elif payment_method_id == 'pix':
             pass
         elif payment_method_id == 'bolbradesco':
@@ -249,7 +249,7 @@ def checkout_process_payment(request):
                 defaults={
                     'status': 'pending',
                     'payment_method': mp_payment_data.get('payment_method_id'),
-                    'transaction_id': mp_payment_data.get('id'),
+                    'transaction_code': mp_payment_data.get('id'),
                     'value': mp_payment_data.get('transaction_amount'),
                     'payer_email': mp_payment_data['payer'].get('email'),
                     'payer_document': mp_payment_data['payer']['identification'].get('number'),
@@ -393,7 +393,7 @@ def checkout_process_payment(request):
 
     #             if payment_info['status'] == 200:
     #                 payment_data = payment_info['response']
-    #                 transaction_id = payment_data.get('id')
+    #                 transaction_code = payment_data.get('id')
     #                 status = payment_data.get('status')
     #                 status_detail = payment_data.get('status_detail')
                     
@@ -431,7 +431,7 @@ def checkout_process_payment(request):
 
                     
     #                 except Purchases.DoesNotExist:
-    #                     logger.error(f"Compra não encontrada para o ID de transação: {transaction_id}")
+    #                     logger.error(f"Compra não encontrada para o ID de transação: {transaction_code}")
     #                     return JsonResponse({'error': 'Compra não encontrada'}, status=404)
     #             else:
     #                 logger.error(f"Erro ao recuperar informações do pagamento: {payment_info.get('message', 'Erro desconhecido')}")
@@ -490,7 +490,7 @@ def webhook_mp(request):
         return JsonResponse({'error': 'Erro ao recuperar informações do pagamento'}, status=400)
 
     payment_data = payment_info['response']
-    transaction_id = payment_data.get('id')
+    transaction_code = payment_data.get('id')
     payment_status = payment_data.get('status')
 
     # Mapeamento correto dos status
@@ -509,7 +509,7 @@ def webhook_mp(request):
     try:
         purchase = Purchases.objects.get(transaction_code=str(payment_id))
     except Purchases.DoesNotExist:
-        logger.error(f"Compra não encontrada para o ID de transação: {transaction_id}")
+        logger.error(f"Compra não encontrada para o ID de transação: {transaction_code}")
         return JsonResponse({'error': 'Compra não encontrada'}, status=404)
 
     if new_status and purchase.status != new_status:

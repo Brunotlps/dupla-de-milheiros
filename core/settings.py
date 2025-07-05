@@ -35,12 +35,12 @@ ALLOWED_HOSTS = [
     '127.0.0.1', 
     
     # ngrok URLs
-    '5ca4-2804-690-33b3-8700-e8c5-7383-bb01-4068.ngrok-free.app',
+    '83ba-2804-690-33b3-8700-dd83-de63-2664-15ad.ngrok-free.app',
     
     ]  
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://5ca4-2804-690-33b3-8700-e8c5-7383-bb01-4068.ngrok-free.app',
+    'https://83ba-2804-690-33b3-8700-dd83-de63-2664-15ad.ngrok-free.app',
 ]
 
 
