@@ -61,7 +61,7 @@ class MercadoPagoUtilsTest(TestCase):
         self.payment_settings.sandbox_access_token = ""
         self.payment_settings.save()
 
-        with self.assertRaise(ValueError):
+        with self.assertRaises(ValueError):
             get_mercadopago_sdk()
 
    

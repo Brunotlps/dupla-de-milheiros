@@ -3,8 +3,10 @@ from datetime import timedelta
 from django.test import TestCase
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 
-from products.models import Course, Module, Lesson, CheckoutSession, Purchases, PaymentSettings
+from products.models import Course, Module, Lesson, CheckoutSession, Purchases, PaymentSettings, ComplementaryMaterial
 from products.forms import PaymentMethodForm
 
 
@@ -98,7 +100,7 @@ class PurchaseModelTest(TestCase):
             active=True,
         )
         self.purchase = Purchases.objects.create(
-            title=self.user,
+            user=self.user,
             course=self.course,
             value=100.00,
             status="approved",
@@ -188,7 +190,7 @@ class PurchaseModelTest(TestCase):
        )
        self.assertTrue(purchase.is_charged_back())
     
-    def test_get_status_display(self):
+    def test_get_status_display_class(self):
         purchase = Purchases.objects.create(
             user=self.user,
             course=self.course,
@@ -219,7 +221,7 @@ class PurchaseModelTest(TestCase):
     
     def test_unique_purchase_per_user_course(self):
         Purchases.objects.create(user=self.user, course=self.course, value=100)
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             Purchases.objects.create(user=self.user, course=self.course, value=100)
     
 
@@ -307,4 +309,48 @@ class PaymentMethodFormTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('card_cvv', form.errors)
 
+class ComplementaryMaterialModelTest(TestCase):
+    def setUp(self):
+        self.course = Course.objects.create(
+            title="Test Course",
+            slug="test-course",
+            description="This is a unit test course.",
+            price=100.00,
+            active=True,
+        )
+
+        self.module = Module.objects.create(
+            course=self.course,
+            title="Introduction Module",
+            order=1
+        )
+
+        self.lesson = Lesson.objects.create(
+            module=self.module,
+            title="Introduction Lesson",
+            order=1,
+            video_url="http://example.com/video.mp4",
+            duration=30
+        )
+
+    def test_clean_requires_file_for_type(self):
+        material = ComplementaryMaterial(
+            lesson=self.lesson,
+            title="Test Material",
+            tipo="file",
+            file=None,
+            link=""
+        )
+        with self.assertRaises(ValidationError):
+            material.clean()
     
+    def test_clean_requires_link_for_type(self):
+        material = ComplementaryMaterial(
+            lesson=self.lesson,
+            title="Test Material",
+            tipo="link",
+            file=None,
+            link=""
+        )
+        with self.assertRaises(ValidationError):
+            material.clean()
