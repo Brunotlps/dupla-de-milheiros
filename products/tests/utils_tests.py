@@ -14,25 +14,41 @@ class MercadoPagoUtilsTest(TestCase):
             production_access_token = "PROD-access-token"
         )
 
-    def test_get_mercadopago_public_key_sandbox(self):
-        with patch('products.utils.PaymentSettings.get_active_settings', return_value=self.payment_settings):
-            public_key = get_mercadopago_public_key()
-            self.assertEqual(public_key, "TEST-public-key")
-
-            self.payment_settings.is_sandbox = False
-            self.payment_settings.save()
-
-            public_key = get_mercadopago_public_key()
-            self.assertEqual(public_key, "PROD-public-key")
+    @patch('products.models.PaymentSettings.get_active_settings')
+    def test_get_mercadopago_public_key_sandbox(self, mock_get_active_settings):
+        # Configura o mock para retornar as configurações de sandbox
+        mock_get_active_settings.return_value = self.payment_settings
+        public_key = get_mercadopago_public_key()
+        self.assertEqual(public_key, "TEST-public-key") 
     
     @patch('products.models.PaymentSettings.get_active_settings')
     def test_get_mercadopago_public_key_production(self,mock_get_active_settings):
         # Configura o mock para retornar as configurações de produção
-        pass
+        self.payment_settings.is_sandbox = False
+        self.payment_settings.save()
+    
+        mock_get_active_settings.return_value = self.payment_settings
+        public_key = get_mercadopago_public_key()
+        self.assertEqual(public_key, "PROD-public-key")
 
+    @patch('products.models.PaymentSettings.get_active_settings')
+    def test_get_mercadopago_public_key_no_key(self, mock_get_active_settings):
+        # Configura o mock para retornar as configurações sem public key
+        self.payment_settings.is_sandbox = False
+        self.payment_settings.production_public_key = ""
+        self.payment_settings.save()
+
+        mock_get_active_settings.return_value = self.payment_settings
+        with self.assertRaises(ValueError):
+            get_mercadopago_public_key()
+        
+
+    @patch('products.models.PaymentSettings.get_active_settings')
     @patch('mercadopago.SDK')
-    def test_get_mercadopago_sdk_sandbox(self, mock_sdk):
+    def test_get_mercadopago_sdk_sandbox(self, mock_sdk, mock_get_active_settings):
         # Configurando o mock
+
+        mock_get_active_settings.return_value = self.payment_settings
         mock_instance = MagicMock()
         mock_sdk.return_value = mock_instance
 
@@ -43,11 +59,13 @@ class MercadoPagoUtilsTest(TestCase):
         mock_sdk.assert_called_once_with("TEST-access-token")
         self.assertEqual(sdk, mock_instance)
     
+    @patch('products.models.PaymentSettings.get_active_settings')
     @patch('mercadopago.SDK')
-    def test_get_mercadopago_sdk_production(self, mock_sdk):
+    def test_get_mercadopago_sdk_production(self, mock_sdk, mock_get_active_settings):
         self.payment_settings.is_sandbox = False
         self.payment_settings.save()
 
+        mock_get_active_settings.return_value = self.payment_settings
         mock_instance = MagicMock()
         mock_sdk.return_value = mock_instance
 
@@ -57,9 +75,12 @@ class MercadoPagoUtilsTest(TestCase):
         self.assertEqual(sdk, mock_instance)
         
 
-    def test_get_mercadopago_sdk_no_token(self):
+    @patch('products.models.PaymentSettings.get_active_settings')
+    def test_get_mercadopago_sdk_no_token(self, mock_get_active_settings):
         self.payment_settings.sandbox_access_token = ""
         self.payment_settings.save()
+
+        mock_get_active_settings.return_value = self.payment_settings
 
         with self.assertRaises(ValueError):
             get_mercadopago_sdk()

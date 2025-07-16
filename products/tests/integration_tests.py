@@ -83,34 +83,37 @@ class CourseViewsTest(TestCase):
     def test_checkout_expired_session(self):
         self.client.login(username='student', password='123')
 
-        from products.models import CheckoutSession
         from datetime import timedelta
+        from unittest.mock import patch
         from django.utils import timezone
+        from products.models import CheckoutSession
+
+        session_expires_at = timezone.now() + timedelta(hours=1)
 
         session = CheckoutSession.objects.create(
             user=self.user,
             course=self.course,
-            expires_at=timezone.now() - timedelta(minutes=1)
+            expires_at=session_expires_at
         )
 
         session_id = session.session_id
-        session = self.client.session
-        session['checkout_session_id'] = session_id
-        session.save()
-        response = self.client.get(reverse('products:checkout_payment'))
+        client_session = self.client.session
+        client_session['checkout_session_id'] = session_id
+        client_session.save()
 
-        print("DEBUG: status_code:", response.status_code)
-        print("DEBUG: templates:", getattr(response, 'templates', None))
-        print("DEBUG: redirect_chain:", getattr(response, 'redirect_chain', None))
-        print("DEBUG: content:", response.content.decode())
+        fake_current_time = session_expires_at + timedelta(hours=1)
+        with patch('django.utils.timezone.now', return_value=fake_current_time):
+            print(f"DEBUG: Session expires_at: {session.expires_at}")
+            print(f"DEBUG: Mocked current time: {fake_current_time}")
+            print(f"DEBUG: Is expired: {session.is_expired()}")
 
-        
-        if response.status_code == 302:
+            response = self.client.get(reverse('products:checkout_payment'))
+
+            print("DEBUG: status code:", response.status_code)
+
+            self.assertTrue(session.is_expired())
+            self.assertEqual(response.status_code, 302)
             self.assertRedirects(response, reverse('products:course_list'))
-        else:
-            self.assertEqual(response.status_code, 200)
-            self.assertTemplateUsed(response, 'error_page.html')
-            self.assertContains(response, 'Erro na configuração de pagamento')
     
     def test_course_detail_not_found(self):
         response = self.client.get(reverse('products:course_detail', args=['curso-inexistente']))

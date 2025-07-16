@@ -64,7 +64,7 @@ class CheckoutSessionModelTest(TestCase):
         )
 
         self.valid_session = CheckoutSession.objects.create(
-            session_id="expired-session-id",
+            session_id="valid-session-id",
             course=self.course,
             expires_at=timezone.now() + timedelta(hours=1)
         )
@@ -119,9 +119,12 @@ class PurchaseModelTest(TestCase):
         self.assertEqual(str(self.purchase), expected_str)
 
     def test_is_approved(self):
+        new_user = User.objects.create_user(username='student_approved', password='123')
+        new_course = Course.objects.create(title="Course Approved", slug="course-approved", price=50.00)
+        
         purchase = Purchases.objects.create(
-            user=self.user,
-            course=self.course,
+            user=new_user,
+            course=new_course,
             value=100.00,
             status='approved',
         )
@@ -197,15 +200,6 @@ class PurchaseModelTest(TestCase):
             value=100.00,
             status='approved',
         )
-        self.assertEqual(purchase.get_status_display(), 'Aprovado')
-    
-    def get_status_display_class(self):
-        purchase = Purchases.objects.create(
-            user=self.user,
-            course=self.course,
-            value=100.00,
-            status='approved',
-        )
         self.assertEqual(purchase.get_status_display_class(), 'success')
 
     
@@ -220,9 +214,12 @@ class PurchaseModelTest(TestCase):
         self.assertEqual(purchase.get_payment_method_display(), 'Cartão de Crédito')
     
     def test_unique_purchase_per_user_course(self):
-        Purchases.objects.create(user=self.user, course=self.course, value=100)
+        new_user = User.objects.create_user(username='student2', password='123')
+        new_course = Course.objects.create(title="Course 2", slug="course-2", price=50.00)
+        # Primeira compra - deve funcionar
+        Purchases.objects.create(user=new_user, course=new_course, value=100)
         with self.assertRaises(IntegrityError):
-            Purchases.objects.create(user=self.user, course=self.course, value=100)
+            Purchases.objects.create(user=new_user, course=new_course, value=100)
     
 
 class PaymentSettingsModelTest(TestCase):
