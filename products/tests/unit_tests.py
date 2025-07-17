@@ -55,6 +55,12 @@ class CourseModelTest(TestCase):
 
 class CheckoutSessionModelTest(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(
+            username='test_user',
+            email='test@example.com',
+            password='123'
+        )
+
         self.course = Course.objects.create(
             title="Test Course",
             slug="test-course",
@@ -64,18 +70,21 @@ class CheckoutSessionModelTest(TestCase):
         )
 
         self.valid_session = CheckoutSession.objects.create(
+            user=self.user,
             session_id="valid-session-id",
             course=self.course,
             expires_at=timezone.now() + timedelta(hours=1)
         )
 
         self.expired_session = CheckoutSession.objects.create(
+            user=self.user,
             session_id="expired-session-id",
             course=self.course,
             expires_at=timezone.now() - timedelta(hours=1)
         )
 
     def test_checkout_session_creation(self):
+        self.assertEqual(self.valid_session.user.username, "test_user")
         self.assertEqual(self.valid_session.course, self.course)
         self.assertEqual(self.valid_session.session_id, "valid-session-id")
 
@@ -131,72 +140,96 @@ class PurchaseModelTest(TestCase):
         self.assertTrue(purchase.is_approved())
 
     def test_is_pending(self):
+        new_user = User.objects.create_user(username='student_pending', password='123')
+        new_course = Course.objects.create(title="Course Pendig", slug="course-pending", price=50.00)
+        
         purchase = Purchases.objects.create(
-            user=self.user,
-            course=self.course,
+            user=new_user,
+            course=new_course,
             value=100.00,
             status='pending',
         )
         self.assertTrue(purchase.is_pending())
     
     def test_is_rejected(self):
+        new_user = User.objects.create_user(username='student_rejected', password='123')
+        new_course = Course.objects.create(title="Course rejected", slug="course-rejected", price=50.00)
+
         purchase = Purchases.objects.create(
-            user=self.user,
-            course=self.course,
+            user=new_user,
+            course=new_course,
             value=100.00,
             status='rejected',
         )
         self.assertTrue(purchase.is_rejected())
     
     def test_is_canceled(self):
+        new_user = User.objects.create_user(username='student_canceled', password='123')
+        new_course = Course.objects.create(title="Course canceled", slug="course-canceled", price=50.00)
+
         purchase = Purchases.objects.create(
-            user=self.user,
-            course=self.course,
+            user=new_user,
+            course=new_course,
             value=100.00,
             status='canceled',
         )
         self.assertTrue(purchase.is_canceled())
     
     def test_is_in_process(self):
+        new_user = User.objects.create_user(username='student_process', password='123')
+        new_course = Course.objects.create(title="Course process", slug="course-process", price=50.00)
+
         purchase = Purchases.objects.create(
-            user=self.user,
-            course=self.course,
+            user=new_user,
+            course=new_course,
             value=100.00,
             status='in_process',
         )
         self.assertTrue(purchase.is_in_process())
 
     def test_is_refunded(self):
+        new_user = User.objects.create_user(username='student_refunded', password='123')
+        new_course = Course.objects.create(title="Course refunded", slug="course-refunded", price=50.00)
+
         purchase = Purchases.objects.create(
-            user=self.user,
-            course=self.course,
+            user=new_user,
+            course=new_course,
             value=100.00,
             status='refunded',
         )
         self.assertTrue(purchase.is_refunded())
     
     def test_is_in_mediation(self):
+        new_user = User.objects.create_user(username='student_mediation', password='123')
+        new_course = Course.objects.create(title="Course mediation", slug="course-mediation", price=50.00)
+
         purchase = Purchases.objects.create(
-            user=self.user,
-            course=self.course,
+            user=new_user,
+            course=new_course,
             value=100.00,
             status='in_mediation',
         )
         self.assertTrue(purchase.is_in_mediation())
      
     def test_is_charged_back(self):
+       new_user = User.objects.create_user(username='student_charged_back', password='123')
+       new_course = Course.objects.create(title="Course charged back", slug="course-charged-back", price=50.00)
+       
        purchase = Purchases.objects.create(
-           user=self.user,
-           course=self.course,
+           user=new_user,
+           course=new_course,
            value=100.00,
            status='charged_back',
        )
        self.assertTrue(purchase.is_charged_back())
     
     def test_get_status_display_class(self):
+        new_user = User.objects.create_user(username='student_status', password='123')
+        new_course = Course.objects.create(title="Course Status", slug="course-status", price=100.00)
+
         purchase = Purchases.objects.create(
-            user=self.user,
-            course=self.course,
+            user=new_user,
+            course=new_course,
             value=100.00,
             status='approved',
         )
@@ -204,9 +237,12 @@ class PurchaseModelTest(TestCase):
 
     
     def test_get_payment_method_display(self):
+        new_user = User.objects.create_user(username='payment_user', password='123')
+        new_course = Course.objects.create(title="Payment Course", slug="payment-course", price=100.00)
+        
         purchase = Purchases.objects.create(
-            user=self.user,
-            course=self.course,
+            user=new_user,
+            course=new_course,
             value=100.00,
             status='approved',
             payment_method='credit_card',
@@ -339,7 +375,7 @@ class ComplementaryMaterialModelTest(TestCase):
             link=""
         )
         with self.assertRaises(ValidationError):
-            material.clean()
+            material.full_clean()
     
     def test_clean_requires_link_for_type(self):
         material = ComplementaryMaterial(
@@ -350,4 +386,4 @@ class ComplementaryMaterialModelTest(TestCase):
             link=""
         )
         with self.assertRaises(ValidationError):
-            material.clean()
+            material.full_clean()

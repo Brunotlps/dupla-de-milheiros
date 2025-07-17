@@ -144,6 +144,27 @@ class Purchases(models.Model):
     def is_approved(self):
         return self.status == 'approved'
     
+    def is_pending(self):
+        return self.status == 'pending'
+    
+    def is_rejected(self):
+        return self.status == 'rejected'
+    
+    def is_canceled(self):
+        return self.status == 'canceled'
+    
+    def is_in_process(self):
+        return self.status == 'in_process'
+    
+    def is_refunded(self):
+        return self.status == 'refunded'
+    
+    def is_in_mediation(self):
+        return self.status == 'in_mediation'
+    
+    def is_charged_back(self):
+        return self.status == 'charged_back'
+    
     # Define a URL canônica para um objeto 'Purchase' específico 
     def get_absolute_url(self):
         return reverse("products:purchase_detail", args=[self.id])
@@ -162,6 +183,10 @@ class Purchases(models.Model):
         }
 
         return status_classes.get(self.status, 'secondary')
+
+    def get_payment_method_display(self):
+        payment_methods = dict(self.PAYMENT_METHOD_CHOICES)
+        return payment_methods.get(self.payment_method, 'Método de pagamento desconhecido')
 
 # Modelo para armazenar informações temporárias durante o processo de checkout
 
