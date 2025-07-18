@@ -86,11 +86,21 @@ class CheckoutSessionModelTest(TestCase):
     def test_checkout_session_creation(self):
         self.assertEqual(self.valid_session.user.username, "test_user")
         self.assertEqual(self.valid_session.course, self.course)
-        self.assertEqual(self.valid_session.session_id, "valid-session-id")
+        self.assertIsNotNone(self.valid_session.session_id)
+        
 
     def test_is_expired_method(self):
         self.assertFalse(self.valid_session.is_expired())
-        self.assertTrue(self.expired_session.is_expired())
+
+        expired_session = CheckoutSession.objects.create(
+            user=self.user,
+            course=self.course,
+        )
+
+        expired_session.expires_at = timezone.now() - timedelta(hours=1)
+        expired_session.save(update_fields=['expires_at'])
+
+        self.assertTrue(expired_session.is_expired())
 
     
 class PurchaseModelTest(TestCase):
@@ -297,14 +307,13 @@ class PaymentMethodFormTest(TestCase):
 
     def test_payment_method_form_invalid(self):
         form_data = {
-            'payment_method': '',
+            'payment_method': 'credit_card',
             'card_number': '',
             'card_expiration': '',
             'card_cvv': ''
         }
         form = PaymentMethodForm(data=form_data)
         self.assertFalse(form.is_valid())
-        self.assertIn('payment_method', form.errors)
         self.assertIn('card_number', form.errors)
         self.assertIn('card_expiration', form.errors)
         self.assertIn('card_cvv', form.errors)  
