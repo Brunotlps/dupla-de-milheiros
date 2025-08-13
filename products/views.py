@@ -3,16 +3,19 @@ from django.shortcuts import get_object_or_404, render, redirect
 from core import forms
 from .models import Course, Module, Lesson, Purchases, CheckoutSession, PaymentSettings
 from .forms import PaymentMethodForm, CreditCardForm, CustomerInfoForm
-from .utils import get_mercadopago_public_key, get_mercadopago_sdk
+from .utils import get_mercadopago_public_key, get_mercadopago_sdk, validate_mp_signature
 
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.urls import reverse
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.conf import settings
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
 import logging
 import json
+
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -22,16 +25,25 @@ from django.views.decorators.http import require_POST
 logger = logging.getLogger(__name__)
 
 
-
+@cache_page(60 * 15) 
 def course_list(request):
-    courses = Course.objects.filter(active=True)
+    cache_key = 'active_courses'
+    courses = cache.get(cache_key)
+
+    if not courses:
+        courses = Course.objects.filter(active=True).select_related()
+        cache.set(cache_key, courses, 300)
     return render(request, 'products/course_list.html', {
         'courses':courses,
         'section': 'products'
     })
 
 def course_detail(request, slug):
-    course = get_object_or_404(Course, slug=slug, active=True)
+    course = get_object_or_404(
+        Course.objects.prefetch_related('modules__lessons__materials'),
+        slug=slug,
+        active=True
+    )
     modules = course.modules.all().order_by('order')
 
     user_purchased = False
@@ -354,104 +366,13 @@ def checkout_process_payment(request):
         }, status=500)
 
 
-
-# @csrf_exempt
-# def webhook_mp(request):
-
-    # signature = request.headers.get('X-signature')
-    # if not signature:
-    #     logger.error("Webhook recebido sem assinatura.")
-    #     return JsonResponse({'error': 'Assinatura ausente'}, status=400) 
-    
-    # if request.method == 'POST':
-    #     data = json.loads(request.body.decode('utf-8'))
-    #     logger.info(f"Webhook recebido: {data}")
-        
-    #     # Verificando o tipo de notificação
-    #     if data.get('type') == 'payment':
-    #         logger.info("Processando notificação de pagamento do Mercado Pago")
-    #         # Verifica se o payload contém os dados necessários
-    #         payload = data.get('data', {})
-    #         if payload is None:
-    #             logger.warning("Webhook recebido sem payload de dados.")
-    #             return JsonResponse({'error': 'Payload de dados ausente'}, status=400)
-
-
-    #         payment_id = payload.get('id')
-    #         if not payment_id:
-    #             logger.error("Webhook recebido sem ID de pagamento.")
-    #             return JsonResponse({'error': 'ID de pagamento ausente'}, status=400)
-
-    #         logger.info(f"ID do pagamento recebido: {payment_id}")
-
-    #         sdk = get_mercadopago_sdk()
-
-    #         # Recuperando as informações do pagamento
-    #         try:
-    #             payment_info = sdk.payment().get(payment_id)
-    #             logger.info(f"Informações do pagamento: {payment_info}")
-
-    #             if payment_info['status'] == 200:
-    #                 payment_data = payment_info['response']
-    #                 transaction_code = payment_data.get('id')
-    #                 status = payment_data.get('status')
-    #                 status_detail = payment_data.get('status_detail')
-                    
-    #                 # Buscando a compra associada ao pagamento
-    #                 try:
-    #                     purchase = Purchases.objects.get(
-    #                         transaction_code = str(payment_id),
-    #                     )
-                        
-    #                     payment_status = payment_data.get('status')
-    #                     new_status = None
-    #                     if payment_status == 'approved':
-    #                         new_status = 'approved'
-    #                     elif payment_status == 'pending':
-    #                         new_status = 'pending'
-    #                     elif payment_status in ['rejected', 'canceled', 'refunded', 'charged_back']:
-    #                         new_status = 'canceled'
-
-    #                     # Tratamento de idempotencia
-    #                     if new_status and purchase.status != new_status:
-    #                         old_status = purchase.status
-    #                         purchase.status = new_status
-
-                        
-    #                         purchase.save()
-
-    #                         # Log da atualização do status da compra
-    #                         logger.info(f"Compra {purchase.id} atualizada para o status: {purchase.status}")
-                            
-                        
-    #                     else:
-    #                         logger.info(f"Compra {purchase.id} já está no status: {purchase.status}, nenhuma atualização necessária.")      
-                        
-    #                     return JsonResponse({'status': 'success', 'message': 'Pagamento processado com sucesso'}, status=200)
-
-                    
-    #                 except Purchases.DoesNotExist:
-    #                     logger.error(f"Compra não encontrada para o ID de transação: {transaction_code}")
-    #                     return JsonResponse({'error': 'Compra não encontrada'}, status=404)
-    #             else:
-    #                 logger.error(f"Erro ao recuperar informações do pagamento: {payment_info.get('message', 'Erro desconhecido')}")
-    #                 return JsonResponse({'error': 'Erro ao recuperar informações do pagamento'}, status=400)
-
-    #         except json.JSONDecodeError as e:
-    #             logger.error(f"Erro ao recuperar informações do pagamento: {str(e)}")
-    #             return JsonResponse({'error': 'Erro ao recuperar informações do pagamento'}, status=500)
-            
-    #     return JsonResponse({'status': 'ignored'})
-    
-    # else:
-    #     logger.warning("Webhook recebido com método diferente de POST.")
-    #     return JsonResponse({'error': 'Método não permitido'}, status=405)
 @csrf_exempt
 def webhook_mp(request):
+    
+    
     signature = request.headers.get('X-signature')
-    if not signature:
-        logger.error("Webhook recebido sem assinatura.")
-        return JsonResponse({'error': 'Assinatura ausente'}, status=400)
+    if not validate_mp_signature(signature, request.body):
+        return HttpResponseForbidden()
 
     if request.method != 'POST':
         logger.warning("Webhook recebido com método diferente de POST.")

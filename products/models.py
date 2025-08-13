@@ -13,9 +13,13 @@ class Course(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     creation_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(default=True, db_index=True)
     
     class Meta:
+        indexes = [
+            models.Index(fields=['active', '-creation_date']),
+        ]
+
         ordering = ['-creation_date']
         verbose_name = 'Curso'
         verbose_name_plural = 'Cursos'
@@ -231,10 +235,14 @@ class PaymentSettings(models.Model):
     # Credenciais de Produção
     production_public_key = models.CharField(max_length=255, blank=True, null=True)
     production_access_token = models.CharField(max_length=255, blank=True, null=True)
+    production_webhook_secret = models.CharField(max_length=255, blank=True, null=True, 
+                                                help_text="Secret para validação de webhooks em produção")
 
     # Credenciais de Sandbox (Testes)
     sandbox_public_key = models.CharField(max_length=255, blank=True, null=True)
     sandbox_access_token = models.CharField(max_length=255, blank=True, null=True)
+    sandbox_webhook_secret = models.CharField(max_length=255, blank=True, null=True,
+                                             help_text="Secret para validação de webhooks em sandbox")
 
     creation_date = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
