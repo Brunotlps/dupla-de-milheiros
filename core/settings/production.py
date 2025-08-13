@@ -59,3 +59,4 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 SECURE_HSTS_SECONDS = 31536000  # 1 ano / 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'

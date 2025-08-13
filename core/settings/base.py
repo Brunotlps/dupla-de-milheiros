@@ -66,6 +66,8 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # Middlewares base / Base middlewares
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.security.SecurityHeadersMiddleware',
+    'core.middleware.security.SecurityWebhookMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
