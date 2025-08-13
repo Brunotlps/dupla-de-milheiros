@@ -97,7 +97,7 @@ def validate_mp_signature(signature_header, request_body):
         is_valid = hmac.compare_digest(signature, expected_signature)
         
         if not is_valid:
-            logger.warning(f"Assinatura inválida do webhook. Esperada: {expected_signature}, Recebida: {signature}")
+            logger.warning(f"Assinatura inválida do webhook. Hash esperado: {expected_signature[:8]}..., Hash recebido: {signature[:8]}...")
         
         return is_valid
         

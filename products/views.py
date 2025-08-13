@@ -104,8 +104,8 @@ def checkout_payment(request):
         return redirect("products:course_list") 
     
     except ValueError as e:
-        print(f"Erro ao obter Public Key: {e}")
-        return render(request, 'error_page.html',{'message': 'Erro na configuração de pagamento'})
+        logger.error(f"Erro ao obter Public Key: {e}")  
+        return render(request, 'error.html',{'message': 'Erro na configuração de pagamento'})
 
     if request.method == "POST":
         pass
@@ -124,7 +124,11 @@ def checkout_payment(request):
 @require_POST
 @login_required
 def checkout_process_payment(request):
-    logger.info("Iniciando o processamento do pagamento")
+    logger.info("Processamento de pagamento iniciado", extra={
+        'user_id': request.user.id,
+        'session_id': request.session.get('checkout_session_id'),
+        'ip_address': request.META.get('REMOTE_ADDR')
+    })
 
     try:
         # Recuperando os dados do Payment Brick
@@ -239,7 +243,7 @@ def checkout_process_payment(request):
                     "number": form_data.get('payer_document')
                 }         
             else:
-                return  JsonResponse({'error': "Campo 'payer_document' obrigatório,"}, status=400)
+                return  JsonResponse({'error': "Campo 'payer_document' obrigatório."}, status=400)
         
         # Criando o pagamento no Mercado Pago
         logger.info(f"Processando pagamento para o curso {course.title} com método {mp_payment_data.get('payment_method_id')}")
@@ -369,6 +373,15 @@ def checkout_process_payment(request):
 @csrf_exempt
 def webhook_mp(request):
     
+
+    client_ip = request.META.get('REMOTE_ADDR')
+    cache_key = f'webhook_rate_limit_{client_ip}'
+
+    if cache.get(cache_key):
+        logger.warning(f"Taxa de requisições excedida para o IP: {client_ip}")
+        return JsonResponse({'error': 'Taxa de requisições excedida. Tente novamente mais tarde.'}, status=429)
+    
+    cache.set(cache_key, True, 60)
     
     signature = request.headers.get('X-signature')
     if not validate_mp_signature(signature, request.body):
@@ -477,7 +490,7 @@ def checkout_cancel(request):
 def purchase_detail(request, purchase_id):
     purchase = get_object_or_404(Purchases, id=purchase_id, user=request.user)
 
-    return render(request, '/products/purchases/detail.html', {
+    return render(request, 'products/purchases/detail.html', {
         'purchase': purchase
     })
 
