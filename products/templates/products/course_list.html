@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}Cursos de Milhas - Dupla de Milheiros{% endblock %}
+{% block meta_description %}Explore nossos cursos práticos sobre milhas aéreas e aprenda a viajar o mundo gastando menos.{% endblock %}
+
 {% block body %}
 <!-- Cabeçalho da página -->
 <div class="page-header">
@@ -25,9 +28,9 @@
                         <div class="card h-100 course-card">
                             <div class="course-image-container">
                                 {% if course.image %}
-                                    <img src="{{ course.image.url }}" class="course-image" alt="{{ course.title }}">
+                                    <img src="{{ course.image.url }}" class="course-image" alt="{{ course.title }}" loading="lazy">
                                 {% else %}
-                                    <img src="{% static 'images/course-placeholder.jpg' %}" class="course-image" alt="Imagem do curso">
+                                    <img src="{% static 'images/course-placeholder.jpg' %}" class="course-image" alt="Imagem do curso" loading="lazy">
                                 {% endif %}
                             </div>
                             <div class="card-body d-flex flex-column">

@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 
+{% block title %}Login - Dupla de Milheiros{% endblock %}
+{% block meta_description %}Faça login na sua conta para acessar seus cursos sobre milhas aéreas.{% endblock %}
+
 {% block body %}
 
 
@@ -16,8 +19,8 @@
                 {{ form.username }}
                 {% if form.username.errors %}
                     <div class="invalid-feedback d-block">
-                        {% for error in form.username.errrors %}
-                            {{error}}
+                        {% for error in form.username.errors %}
+                            {{ error }}
                         {% endfor %}
                     </div>
                 {% endif %}

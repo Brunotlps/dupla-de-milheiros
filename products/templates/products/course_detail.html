@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}{{ course.title }} - Dupla de Milheiros{% endblock %}
+{% block meta_description %}{{ course.description|truncatewords:20 }}{% endblock %}
+
 {% block body %}
 <!-- Cabeçalho da página -->
 <div class="page-header">
@@ -23,9 +26,9 @@
             <div class="col-md-5">
                 <div class="course-image-large-container mb-4">
                     {% if course.image %}
-                        <img src="{{ course.image.url }}" class="course-image-large" alt="{{ course.title }}">
+                        <img src="{{ course.image.url }}" class="course-image-large" alt="{{ course.title }}" loading="lazy">
                     {% else %}
-                        <img src="{% static 'images/course-placeholder.jpg' %}" class="course-image-large" alt="Imagem do curso">
+                        <img src="{% static 'images/course-placeholder.jpg' %}" class="course-image-large" alt="Imagem do curso" loading="lazy">
                     {% endif %}
                 </div>
                 
