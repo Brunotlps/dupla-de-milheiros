@@ -1,1 +1,0 @@
-"""Jornada completa do usuário / Full user journey tests."""
