@@ -1,0 +1,1 @@
+"""Teste de fluxo de compra / Purchase flow tests."""
