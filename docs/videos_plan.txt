@@ -1,0 +1,39 @@
+Semanas 1-2: Fundação MVP
+✅ Migração de banco de dados
+✅ Modelos básicos (Lesson, LessonProgress)
+✅ Templates de player Vimeo/YouTube
+✅ Sistema básico de acesso
+✅ Testes unitários fundamentais
+Semanas 3-4: Player Avançado
+🔧 Interface responsiva do player
+🔧 Controles customizados
+🔧 Sistema de progresso frontend
+🔧 API de tracking
+🔧 Middleware de segurança
+Semanas 5-6: Analytics e Admin
+📊 Dashboard de métricas
+📊 Admin interface melhorada
+📊 Relatórios de engajamento
+📊 Sistema de notificações
+📊 Integração com testes existentes
+Semanas 7-8: Performance e Finalização
+⚡ Cache de vídeos
+⚡ CDN para assets
+⚡ Otimização de queries
+⚡ Testes de performance
+⚡ Documentação completa
+💡 Considerações Finais
+Vantagens da Abordagem Híbrida:
+
+Time-to-Market rápido com Vimeo
+Baixo risco financeiro inicial
+Escalabilidade futura para streaming próprio
+Flexibilidade total de migração
+Integração perfeita com estrutura Django existente
+Próximos Passos Imediatos:
+
+Definir provider inicial (Vimeo Pro recomendado)
+Criar migration para novos campos
+Implementar templates básicos
+Configurar testes de vídeo
+Deploy em ambiente de staging
