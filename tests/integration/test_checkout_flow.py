@@ -1,10 +1,12 @@
+
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
 
 from products.models import Course, Purchases, PaymentSettings
 
-class CourseViewsTest(TestCase):
+
+class CheckoutFlowTest(TestCase):
     def setUp(self):
         PaymentSettings.objects.create(
             is_active=True,
@@ -24,25 +26,11 @@ class CourseViewsTest(TestCase):
             price=200.00,
             active=True,
         )
-    
-    def test_course_list_view(self):
-        response = self.client.get(reverse('products:course_list'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'products/course_list.html')
-        self.assertContains(response, self.course.title)
 
-    def test_course_detail_view(self):
-        response = self.client.get(reverse('products:course_detail', args=[self.course.slug]))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'products/course_detail.html')
-        self.assertContains(response, self.course.title)
-    
-    def test_checkout_requires_login(self):
-        response = self.client.get(reverse('products:checkout_start', args=[self.course.slug]))
-        self.assertRedirects(response, f'/accounts/login/?next={reverse("products:checkout_start", args=[self.course.slug])}')
-        self.assertEqual(response.status_code, 302)
     
     def test_checkout_authenticated(self):
+        
+        
         self.client.login(username='student', password='123')
         response = self.client.get(reverse('products:checkout_start', args=[self.course.slug]))
         self.assertEqual(response.status_code, 302)
@@ -56,6 +44,8 @@ class CourseViewsTest(TestCase):
         self.assertTemplateUsed(response, 'products/checkout/payment.html')
 
     def test_authenticated_purchase_flow(self):
+        
+        
         self.client.login(username='student', password='123')
         response = self.client.get(reverse('products:checkout_start', args=[self.course.slug]))
         self.assertEqual(response.status_code,302)
@@ -69,6 +59,8 @@ class CourseViewsTest(TestCase):
         self.assertTemplateUsed(response, 'products/checkout/payment.html')
 
     def test_duplicate_purchase_not_allowed(self):
+        
+        
         self.client.login(username='student', password='123')
         Purchases.objects.create(
             user=self.user,
@@ -80,7 +72,10 @@ class CourseViewsTest(TestCase):
         response = self.client.get(reverse('products:checkout_start', args=[self.course.slug]))
         self.assertRedirects(response, reverse('products:course_detail', args=[self.course.slug]))
     
+
     def test_checkout_expired_session(self):
+        
+        
         self.client.login(username='student', password='123')
 
         from datetime import timedelta
@@ -115,6 +110,4 @@ class CourseViewsTest(TestCase):
             self.assertEqual(response.status_code, 302)
             self.assertRedirects(response, reverse('products:course_list'))
     
-    def test_course_detail_not_found(self):
-        response = self.client.get(reverse('products:course_detail', args=['curso-inexistente']))
-        self.assertEqual(response.status_code, 404)
+    

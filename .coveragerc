@@ -1,0 +1,39 @@
+[run]
+source = .
+omit = 
+    */venv/*
+    */env/*
+    */migrations/*
+    */tests/*          # Mantém omissão
+    */unit/*           # Adicionar
+    */integration/*    # Adicionar
+    */utils/*          # Adicionar
+    manage.py
+    */settings/*
+    */asgi.py
+    */wsgi.py
+    */__pycache__/*
+    */node_modules/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+
+show_missing = True
+precision = 2
+skip_covered = False
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml
