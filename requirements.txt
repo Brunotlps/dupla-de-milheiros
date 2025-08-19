@@ -3,6 +3,7 @@ python-dotenv
 mercadopago
 Pillow
 requests
+PyVimeo
 selenium==4.35.0
 webdriver-manager>=4.0.0
 pytest-django>=4.7.0
