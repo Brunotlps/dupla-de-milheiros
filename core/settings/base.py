@@ -43,6 +43,16 @@ def validate_production_env():
 
 NEWSAPI_KEY = os.getenv("NEWSAPI_KEY")
 
+# Vimeo API Configuration / Configuração da API do Vimeo
+VIMEO_CLIENT_ID = os.getenv("VIMEO_CLIENT_ID")
+VIMEO_CLIENT_SECRET = os.getenv("VIMEO_CLIENT_SECRET")
+VIMEO_ACCESS_TOKEN = os.getenv("VIMEO_ACCESS_TOKEN")
+
+# Validação das configurações do Vimeo / Validation of Vimeo settings
+if not all([VIMEO_CLIENT_ID, VIMEO_CLIENT_SECRET, VIMEO_ACCESS_TOKEN]):
+    print("⚠️  WARNING: Vimeo API credentials not configured. Video system will not work.")
+    print("   Please set VIMEO_CLIENT_ID, VIMEO_CLIENT_SECRET, and VIMEO_ACCESS_TOKEN in your .env file")
+
 # Apps organizados por categorias / Apps organized by categories
 DJANGO_APPS = [
     'django.contrib.admin',
