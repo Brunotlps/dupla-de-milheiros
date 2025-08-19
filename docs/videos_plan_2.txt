@@ -1,0 +1,66 @@
+RESUMO DOS PONTOS CRÍTICOS
+⚠️ 1. MODIFICAÇÕES NO BANCO DE DADOS
+Atual: O modelo Lesson já tem:
+
+✅ video_url (URLField) - mas precisará ser adaptado
+✅ duration (PositiveIntegerField) - em minutos
+Necessário Adicionar:
+
+video_provider (CharField) - 'vimeo', 'youtube', 'direct'
+video_id (CharField) - ID do vídeo no Vimeo/YouTube
+Renomear video_url para direct_video_url ou manter compatibilidade
+Novo modelo LessonProgress para tracking
+⚠️ 2. TEMPLATES E INTERFACE
+Atual: Template course_detail.html mostra:
+
+✅ Lista de módulos e aulas
+✅ Verificação de compra (user_purchased)
+❌ NÃO tem player de vídeo implementado
+Necessário:
+
+Criar template para player de vídeo
+Adicionar sistema de progresso
+Interface para aulas individuais
+Controles de navegação entre aulas
+⚠️ 3. VIEWS E LÓGICA
+Atual:
+
+✅ course_detail verifica compra
+✅ Prefetch otimizado para performance
+❌ NÃO tem view para aulas individuais
+Necessário:
+
+View lesson_detail para exibir aula
+API para tracking de progresso
+Middleware de proteção de acesso
+Sistema de URLs temporárias
+⚠️ 4. URLS E ROTEAMENTO
+Atual: Apenas URLs para:
+
+✅ Lista de cursos
+✅ Detalhes do curso
+✅ Sistema de checkout
+Necessário Adicionar:
+
+/cursos/<slug>/aula/<int:lesson_id>/ - aula individual
+/api/lesson-progress/ - tracking de progresso
+/video/secure/<int:lesson_id>/ - vídeos protegidos
+⚠️ 5. SEGURANÇA E ACESSO
+Situação Atual:
+
+✅ Verificação de compra implementada
+✅ Sistema de autenticação funcionando
+❌ NÃO tem proteção específica para vídeos
+Riscos a Mitigar:
+
+Links de vídeo diretos acessíveis
+Sharing não autorizado de conteúdo
+Acesso sem verificação de compra
+⚠️ 6. CONTA VIMEO
+Checklist Obrigatório:
+
+<input disabled="" type="checkbox"> Conta Vimeo Pro/Business criada
+<input disabled="" type="checkbox"> API tokens configurados
+<input disabled="" type="checkbox"> Upload de vídeos de teste
+<input disabled="" type="checkbox"> Configuração de privacidade
+<input disabled="" type="checkbox"> Domínio autorizado para embed
