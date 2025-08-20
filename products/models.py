@@ -33,35 +33,124 @@ class Course(models.Model):
         super().save(*args, **kwargs)
 
 class Module(models.Model):
+    
+    
     course = models.ForeignKey(Course, related_name='modules', on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     order = models.PositiveIntegerField(default=0)
     
     class Meta:
+        
+        
         ordering = ['order']
         verbose_name = 'Módulo'
         verbose_name_plural = 'Módulos'
     
     def __str__(self):
+        
+        
         return f'{self.title} - {self.course.title}'
 
 class Lesson(models.Model):
+    
+    
     module = models.ForeignKey(Module, related_name='lessons', on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
-    video_url = models.URLField()
+    video_url = models.URLField(blank=True, null=True, help_text="URL direta do vídeo (compatibilidade)")
     description = models.TextField()
     duration = models.PositiveIntegerField(help_text="Duração em minutos", null=True, blank=True)
     order = models.PositiveIntegerField(default=0)
     creation_date = models.DateTimeField(auto_now_add=True)
+
+
+    # Sistemas de video Vimeo / Vimeo video system
+    VIDEO_PROVIDER_CHOICES = [
+        ('direct', 'URL Direta'),
+        ('vimeo', 'Vimeo'),
+        ('youtube', 'YouTube'),
+    ]
+
+    
+    UPLOAD_STATUS_CHOICES = [
+        ('ready', 'Pronto'),
+        ('pending', 'Pendente'),
+        ('uploading', 'Enviando'),
+        ('processing', 'Processando'),
+        ('error', 'Erro'),
+    ]
+
+
+    video_provider = models.CharField(
+        max_length=20,
+        choices=VIDEO_PROVIDER_CHOICES,
+        default='direct',
+        help_text="Provedor de vídeo"
+    )
+
+    vimeo_video_id = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="ID do vídeo no Vimeo (se aplicável)"
+    )
+
+    upload_status = models.CharField(
+        max_length=20,
+        choices=UPLOAD_STATUS_CHOICES,
+        default='ready',
+        help_text="Status do upload do vídeo"
+    )
+
     
     class Meta:
+        
+        
         ordering = ['order']
         verbose_name = 'Aula'
         verbose_name_plural = 'Aulas'
     
     def __str__(self):
+        
+        
         return f'{self.title} - {self.module.title}'
+    
+    
+    # Métodos para o sistema de vídeo / Methods for the video system
+    def get_video_url(self):
+        """Retorna a URL do vídeo baseada no provedor / Returns the video URL based on the provider"""
+    
+    
+        if self.video_provider == 'vimeo' and self.vimeo_video_id:
+            return f"https://player.vimeo.com/video/{self.vimeo_video_id}"
+        elif self.video_provider == 'direct' and self.video_url:
+            return self.video_url
+        return None
+    
+    def is_video_ready(self):
+        """Verifica se o vídeo está pronto para reprodução / Checks if the video is ready for playback"""
+        
+        
+        return self.upload_status == 'ready'
+    
+    def get_provider_display_name(self):
+        """Retorna o nome amigável do provedor / Returns the friendly name of the provider"""
+        
+        
+        return dict(self.VIDEO_PROVIDER_CHOICES).get(self.video_provider, 'Desconhecido')
+    
+    def get_status_display_class(self):
+        """Retorna classe CSS para o status do upload / Returns CSS class for the upload status"""
+        
+        
+        status_classes = {
+            'ready': 'success',
+            'pending': 'warning', 
+            'uploading': 'info',
+            'processing': 'info',
+            'error': 'danger',
+        }
+        return status_classes.get(self.upload_status, 'secondary')
+
 
 class ComplementaryMaterial(models.Model):
     TYPE_CHOICES = (
