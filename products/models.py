@@ -1,3 +1,6 @@
+from email.policy import default
+from math import log
+from venv import logger
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
@@ -126,11 +129,13 @@ class Lesson(models.Model):
             return self.video_url
         return None
     
+    
     def is_video_ready(self):
         """Verifica se o vídeo está pronto para reprodução / Checks if the video is ready for playback"""
         
         
         return self.upload_status == 'ready'
+    
     
     def get_provider_display_name(self):
         """Retorna o nome amigável do provedor / Returns the friendly name of the provider"""
@@ -138,6 +143,283 @@ class Lesson(models.Model):
         
         return dict(self.VIDEO_PROVIDER_CHOICES).get(self.video_provider, 'Desconhecido')
     
+    
+    def get_embed_iframe(self, width=640, height=360, **options):
+        """
+            Gera código HTML do iframe para embedar vídeos. / Generates HTML code for the iframe to embed videos.
+
+            Args:
+                width (int): Largura do iframe./ Width of the iframe.
+                height (int): Altura do iframe. / Height of the iframe.
+                **options: Outras opções para personalização. / Other options for customization.
+
+            Returns:
+                str: Código HTML do iframe. / HTML code of the iframe.
+        """
+        import logging 
+        from urllib.parse import urlencode
+
+
+        logger = logging.getLogger(__name__)
+
+
+        if not self.is_video_ready():
+            logger.warning(f"Tentativa de embedar vídeo que não está pronto: {self.title}")
+            return None
+        
+
+        try:
+            w = max(100, min(int(width), 1920)) # Limita a largura entre 100 e 1920 / Limits the width between 100 and 1920
+            h = max(100, min(int(height), 1080)) # Limita a altura entre 100 e 1080 / Limits the height between 100 and 1080
+        except (ValueError, TypeError):
+            w, h = 640, 360  # Valores padrão / Default values
+        
+
+        default_options = {
+            'title': 0,
+            'byline': 0,
+            'portrait': 0,
+            'autoplay': 0,
+            'loop': 0,
+            'controls': 1,
+        }
+
+
+        default_options.update(options) # Atualiza com opções personalizadas / Update with custom options
+
+
+        # Gera URL baseada no provider / Generates URL based on the provider
+        if self.video_provider == 'vimeo':
+            if not self.vimeo_video_id:
+                logger.error(f"ID do vídeo do Vimeo não fornecido para {self.title}")
+                return None
+            
+            base_url = f"https://player.vimeo.com/video/{self.vimeo_video_id}"
+            query_string = urlencode(default_options)
+            src_url = f"{base_url}?{query_string}"
+        
+
+        elif self.video_provider == 'direct':
+            if not self.video_url:
+                logger.error(f"URL do vídeo direto não fornecida para {self.title}")
+                return None
+            
+            src_url = self.video_url
+        
+
+        else:
+            logger.error(f"Provedor de vídeo desconhecido: {self.video_provider}")
+            return None
+
+
+        # Gera o código HTML do iframe / Generates the HTML code for the iframe
+        iframe_html = f'''<iframe 
+            src="{src_url}"
+            width="{width}" 
+            height="{height}"
+            frameborder="0"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowfullscreen>
+        </iframe>'''
+
+        
+        return iframe_html
+
+
+    def get_video_duration_formatted(self, format_type='human'):
+        """
+            Retorna a duração do vídeo em formato legível
+
+            Args:
+                format_type (str): Tipo de formatação
+                    - 'human': "1h 23m 45s" (padrão)
+                    - 'short': "1:23:45"
+                    - 'compact': "83m" (tudo em minutos se < 2h)
+
+            Returns:
+                str: Duração formatada ou "Duração não disponível"
+        """
+        import logging
+        
+        logger = logging.getLogger(__name__)
+
+        if not self.duration:
+            logger.warning(f"Duração não disponível para a aula: {self.title}")
+            return "Duração não disponível"
+        
+
+        if self.duration < 0:
+            logger.error(f"Duração inválida para a aula: {self.title}")
+            return "Duração inválida"
+        
+
+        h = self.duration // 3600  
+        m = (self.duration % 3600) // 60
+        s = self.duration % 60
+
+                    
+        if format_type == 'short':
+            if h > 0:
+                return f"{h:02d}:{m:02d}:{s:02d}"
+            else:
+                return f"{m:02d}:{s:02d}"
+            
+
+        elif format_type == 'compact':
+            if h > 0:
+                return f"{h * 60 + m}m"
+            elif m > 0:
+                return f"{m}m"
+            else:
+                return "1m"
+        
+
+        else:
+            parts = []
+            if h > 0:
+                parts.append(f"{h}h")
+            if m > 0:
+                parts.append(f"{m}m")
+            if s > 0 or not parts:
+                parts.append(f"{s}s")
+            return ' '.join(parts)  
+        
+
+    def sync_with_vimeo(self, save=True, force_update=False):
+        """
+            Sincroniza dados da aula com informações do Vimeo
+
+            Args:
+                save (bool): Se deve salvar alterações no banco (padrão: True)
+                force_update (bool): Força atualização mesmo se recente (padrão: False)
+
+            Returns:
+                dict: {
+                    'success': bool,
+                    'updated_fields': list,
+                    'message': str,
+                    'vimeo_data': dict
+                }
+        """
+        import logging
+        from products.vimeo_utils import VimeoVideoManager
+        from django.utils import timezone
+        
+        logger = logging.getLogger(__name__)
+
+
+        if self.video_provider != 'vimeo':
+            logger.error(f"Tentativa de sincronizar aula com provedor diferente de Vimeo: {self.title}")
+            return {
+                'success': False, 
+                'updated_fields': [],
+                'message': 'Provedor não suportado para sincronização',
+                'vimeo_data': None
+            }
+        
+        if not self.vimeo_video_id:
+            logger.error(f"ID do vídeo do Vimeo não fornecido para {self.title}")
+            return {
+                'success': False, 
+                'updated_fields': [],
+                'message': 'ID do vídeo do Vimeo não fornecido',
+                'vimeo_data': None
+            }
+        
+
+        if not force_update and self.update_date:
+            time_since_update = timezone.now() - self.update_date
+            if time_since_update < timezone.timedelta(hours=1):
+                logger.info(f"Sincronização recente para {self.title}, ignorando")
+                return {
+                    'success': False, 
+                    'updated_fields': [],
+                    'message': 'Sincronizado recentemente',
+                    'vimeo_data': None
+                }
+            
+        
+        result = {
+            'success': False,
+            'updated_fields': [],
+            'message': '',
+            'vimeo_data': None
+        }
+
+
+        try:
+            vimeo_manager = VimeoVideoManager()
+            vimeo_data = vimeo_manager.get_video_info(self.vimeo_video_id)
+        except Exception as e:
+            logger.error(f"Erro ao inicializar VimeoVideoManager: {e}")
+            result['message'] = f'Erro ao conectar com Vimeo: {str(e)}'
+            return result
+
+        if not vimeo_data:
+            logger.error(f"Erro ao obter dados do Vimeo para {self.title}")
+            result['message'] = 'Vídeo não encontrado no Vimeo'
+            return result
+
+        result['vimeo_data'] = vimeo_data
+
+        updated_fields = []
+
+
+        # Nome do vídeo (com validação) / Video name (with validation)
+        if 'name' in vimeo_data and vimeo_data['name']:
+            new_title = vimeo_data['name'].strip()[:200]  # Respeitar limite
+            if new_title != self.title:
+                old_title = self.title
+                self.title = new_title
+                updated_fields.append('title')
+                logger.info(f"Título atualizado: '{old_title}' → '{self.title}'")
+
+
+        # Descrição (com tratamento de None) / Description (with None handling)
+        if 'description' in vimeo_data:
+            new_description = vimeo_data['description'] or ''
+            if new_description != self.description:
+                self.description = new_description
+                updated_fields.append('description')
+                logger.info(f"Descrição atualizada para {self.title}")
+        
+
+        # Duração (com validação) / Duration (with validation)
+        if 'duration' in vimeo_data and isinstance(vimeo_data['duration'], int):
+            if vimeo_data['duration'] != self.duration:
+                old_duration = self.duration
+                self.duration = vimeo_data['duration']
+                updated_fields.append('duration')
+                logger.info(f"Duração atualizada: {old_duration}s → {self.duration}s")
+
+        
+        # Atualizando o timestamp / Updating the timestamp
+        if updated_fields:
+            self.update_date = timezone.now()
+            updated_fields.append('update_date')
+
+            result['updated_fields'] = updated_fields
+            result['success'] = True
+            result['message'] = f'{len(updated_fields)-1} campos atualizados: {", ".join(updated_fields[:-1])}'
+
+            if save:
+                try:
+                    self.save(update_fields=updated_fields)  # ✅ CORREÇÃO: Sem campo inexistente
+                    logger.info(f"Aula '{self.title}' salva com {len(updated_fields)} atualizações")
+                except Exception as e:
+                    logger.error(f"Erro ao salvar aula: {e}")
+                    result['success'] = False
+                    result['message'] = f'Erro ao salvar: {str(e)}'
+                    return result
+            else:
+                result['message'] += ' (não salvo no banco)'
+        else:
+            result['success'] = True
+            result['message'] = 'Dados já estão atualizados'
+
+        return result  
+
+           
     def get_status_display_class(self):
         """Retorna classe CSS para o status do upload / Returns CSS class for the upload status"""
         
