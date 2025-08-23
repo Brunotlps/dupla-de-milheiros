@@ -7,6 +7,10 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.text import slugify
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class Course(models.Model):
     title = models.CharField(max_length=200)
@@ -156,11 +160,7 @@ class Lesson(models.Model):
             Returns:
                 str: Código HTML do iframe. / HTML code of the iframe.
         """
-        import logging 
         from urllib.parse import urlencode
-
-
-        logger = logging.getLogger(__name__)
 
 
         if not self.is_video_ready():
@@ -239,9 +239,7 @@ class Lesson(models.Model):
             Returns:
                 str: Duração formatada ou "Duração não disponível"
         """
-        import logging
         
-        logger = logging.getLogger(__name__)
 
         if not self.duration:
             logger.warning(f"Duração não disponível para a aula: {self.title}")
@@ -301,11 +299,8 @@ class Lesson(models.Model):
                     'vimeo_data': dict
                 }
         """
-        import logging
         from products.vimeo_utils import VimeoVideoManager
         from django.utils import timezone
-        
-        logger = logging.getLogger(__name__)
 
 
         if self.video_provider != 'vimeo':
@@ -432,6 +427,235 @@ class Lesson(models.Model):
             'error': 'danger',
         }
         return status_classes.get(self.upload_status, 'secondary')
+
+
+class LessonProgress(models.Model):
+    """
+        Modelo para rastrear o progresso do usuário em aulas específicas / 
+        Model to track user progress on specific lessons
+    """
+
+
+    user = models.ForeignKey(User, related_name='lesson_progress', on_delete=models.CASCADE)
+    lesson = models.ForeignKey(Lesson, related_name='user_progress', on_delete=models.CASCADE)
+
+    # Progresso do video / Video progress
+    last_watched_position = models.PositiveIntegerField(default=0)
+    total_watched_time = models.PositiveIntegerField(default=0)
+    completed = models.BooleanField(default=False)
+    completed_percentage = models.FloatField(default=0.0) 
+
+    # Timestamps
+    first_access = models.DateTimeField(auto_now_add=True)
+    last_access = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+
+
+        unique_together = ('user', 'lesson')
+        verbose_name = 'Progresso da Aula'
+        verbose_name_plural = 'Progresso das Aulas'
+
+
+    def update_progress(self, current_position, total_watched_time_increment=0):
+        """
+            Atualiza progresso do usuário na aula / Updates user progress in the lesson
+    
+            Args:
+                current_position (int): Posição atual em segundos / Current position in seconds
+                total_watched_time_increment (int): Tempo adicional assistido / Additional watched time
+
+            Returns:
+                dict: {
+                    'success': bool,
+                    'previous_percentage': float,
+                    'new_percentage': float,
+                    'completed_changed': bool,
+                    'message': str,
+                    'validation_warnings': list
+                }
+        """
+        from django.db import transaction
+        from django.utils import timezone
+
+        result  = {
+            'success': False,
+            'previous_percentage': self.completed_percentage,
+            'new_percentage': self.completed_percentage,
+            'completed_changed': False,
+            'message': '',
+            'validation_warnings': []
+        }
+
+
+        warnings = []
+
+        # Validações básicas / Basic validations
+        if current_position < 0:
+            logger.error(f"Posição negativa fornecida: {self.user.username} | {current_position}")
+            current_position = 0
+            warnings.append("Posição negativa ajustada para 0")
+        
+
+        if self.lesson.duration and current_position > self.lesson.duration:
+            logger.warning(f"Posição maior que duração: {self.user.username} | {current_position} > {self.lesson.duration}")
+            current_position = self.lesson.duration
+            warnings.append(f"Posição ajustada para a duração do vídeo ({self.lesson.duration}s)")
+        
+        
+        if total_watched_time_increment < 0:
+            logger.error(f"Incremento negativo de tempo assistido: {self.user.username} | {total_watched_time_increment}")
+            total_watched_time_increment = 0
+            warnings.append("Incremento negativo ajustado para 0")
+        
+
+        result['validation_warnings'] = warnings
+
+        try:
+            with transaction.atomic():
+                previous_percentage = self.completed_percentage
+                was_completed = self.completed
+                position_changed = False
+
+                if current_position > self.last_watched_position:
+                    logger.info(f"Progresso {self.user.username}: {self.last_watched_position}s → {current_position}s")
+                    self.last_watched_position = current_position
+                    position_changed = True
+            
+
+                if total_watched_time_increment > 0:
+                    self.total_watched_time += total_watched_time_increment
+                    logger.info(f"Tempo assistido {self.user.username}: +{total_watched_time_increment}s (Total: {self.total_watched_time}s)")
+                
+
+                self.completed_percentage = self.calculate_completed_percentage()
+
+                if self.completed_percentage >= 80.0 and not self.completed:
+                    self.completed = True
+                    
+                    if not self.completed_at:
+                        self.completed_at = timezone.now()
+                    
+                    logger.info(f"Aula completada por {self.user.username}: {self.lesson.title}")
+                
+                self.last_access = timezone.now()
+                
+                self.save()
+            
+                result.update({
+                    'success': True,
+                    'previous_percentage': previous_percentage,
+                    'new_percentage': self.completed_percentage,
+                    'completed_changed': was_completed != self.completed,
+                    'message': self._generate_progress_message(
+                        previous_percentage, 
+                        position_changed, 
+                        was_completed != self.completed
+                    )
+                })
+
+        except Exception as e:
+            logger.error(f"Erro ao atualizar progresso: {e}")
+            result.update({
+                'success': False,
+                'message': f'Erro interno: {str(e)}'
+            })
+
+        return result
+    
+
+    def calculate_completed_percentage(self):
+        """
+            Calcula a porcentagem completada baseada na última posição assistida / Calculates completed percentage based on last watched position
+            Returns:
+                float: Porcentagem completada (0.0 a 100.0) / Completed percentage (0.0 to 100.0)
+        """
+
+
+        if not self.lesson.duration or self.lesson.duration <= 0:
+            return 0.0
+        
+        percentage = (self.last_watched_position / self.lesson.duration) * 100.0
+        return min(100.0, max(0.0, round(percentage, 2))) 
+
+
+    def _generate_progress_message(self, previous_percentage, position_changed, completed_changed):
+        """
+            Gera uma mensagem descritiva sobre a atualização do progresso / Generates a descriptive message about the progress update
+            Args:
+                previous_percentage (float): Porcentagem antes da atualização / Percentage before update
+                position_changed (bool): Se a posição mudou / If position changed
+                completed_changed (bool): Se o status de completado mudou / If completed status changed
+            Returns:
+                str: Mensagem descritiva / Descriptive message
+        """
+        
+        messages = []
+        if position_changed:
+            messages.append(f"Posição atualizada para {self.last_watched_position}s")
+        
+        if self.total_watched_time > 0:
+            messages.append(f"Tempo total assistido: {self.total_watched_time}s")
+        
+        if previous_percentage != self.completed_percentage:
+            messages.append(f"Progresso: {previous_percentage:.2f}% → {self.completed_percentage:.2f}%")
+        
+        if completed_changed:
+            if self.completed:
+                messages.append("Aula marcada como completada")
+            else:
+                messages.append("Aula marcada como não completada")
+        
+        if not messages:
+            return "Nenhuma mudança no progresso"
+        
+        return "; ".join(messages)
+        
+
+    def get_remaining_time(self, format_type='human'):
+        """
+            Calcula o tempo restante para completar a aula / Calculates remaining time to complete the lesson
+            Args:
+                format_type (str): Tipo de formatação / Format type
+                    - 'human': "1h 23m 45s" (padrão / default)
+                    - 'short': "1:23:45"
+                    - 'compact': "83m" (tudo em minutos se < 2h / all in minutes if < 2h)
+            Returns:
+                str|int: Tempo restante formatado ou em segundos / Remaining time formatted or in seconds
+        """
+
+        if self.completed:
+            return "Aula concluída"
+        
+        if not self.lesson.duration:
+            return "Duração não disponível"
+        
+        remaining_seconds = self.lesson.duration - self.last_watched_position
+
+        if remaining_seconds <= 0:
+            return "Aula concluída"
+        
+        if format_type == 'seconds':
+            return remaining_seconds
+        elif format_type == 'formatted':
+            return self.lesson.get_video_duration_formatted('human')  # Reusa método da Lesson
+        
+        else:  # format_type == 'human'
+            h = remaining_seconds // 3600
+            m = (remaining_seconds % 3600) // 60
+            s = remaining_seconds % 60
+
+            parts = []
+            if h > 0:
+                parts.append(f"{h}h")
+            if m > 0:
+                parts.append(f"{m}m")
+            if s > 0 or not parts:
+                parts.append(f"{s}s")
+
+            return f"{' '.join(parts)} restantes"
+        
 
 
 class ComplementaryMaterial(models.Model):

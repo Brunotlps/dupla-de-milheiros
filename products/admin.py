@@ -32,9 +32,23 @@ class ModuleAdmin(admin.ModelAdmin):
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ['title', 'module', 'order', 'duration']
-    list_filter = ['module__course', 'module']  # Corrigido: module__course com dois underscores
-    search_fields = ['title', 'description']
+    list_display = ['title', 'module', 'video_provider', 'upload_status', 'order', 'duration']
+    list_filter = ['module__course', 'module', 'video_provider', 'upload_status']
+    search_fields = ['title', 'description', 'vimeo_video_id']
+    list_editable = ['upload_status']
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('module', 'title', 'description', 'order')
+        }),
+        ('Sistema de Vídeo', {
+            'fields': ('video_provider', 'video_url', 'vimeo_video_id', 'upload_status'),
+            'description': 'Configure o provedor de vídeo e as informações relacionadas'
+        }),
+        ('Configurações', {
+            'fields': ('duration',),
+            'classes': ('collapse',)
+        }),
+    )
     inlines = [ComplementaryMaterialInline]
 
 @admin.register(ComplementaryMaterial)  # Registrando o modelo, não o inline
